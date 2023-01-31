@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% block headcss %}
+    <link href="/static/css/passw.css" rel="stylesheet">
+{% endblock %}
+{% block header %}
+    <nav class="navbar navbar-landing navbar-expand-lg navbar-dark bg-gradient-primary p-0">
+        <div class="container-fluid">
+            <a class="navbar-brand mr-auto" href="/"
+               style="font-family:Arial; font-weight: bolder;font-size: 16px;letter-spacing:4px">
+                <i class="{{ logo_sistema }}"></i>
+                {{ nombre_sistema }} </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar1">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbar1">
+                <ul class="navbar-nav ml-auto">
+
+                    <li class="nav-item">
+                        <a class="nav-link page-scroll text-white" href=""
+                           title="" style="font-family:Arial; font-weight: bolder;font-size: 16px;letter-spacing:4px">
+                            @istvr.edu.ec |
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link page-scroll text-white" href="http://sitio.istvr.edu.ec/"
+                           title="" style="font-family:Arial; font-weight: bolder;font-size: 16px;letter-spacing:4px">
+                            www.istvr.edu.ec
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div> <!-- container //  -->
+    </nav>
+{% endblock %}
+
+{% block main %}
+    <div class="container-fluid" style="margin-top: 5rem">
+        <div class="row">
+            <div class="col-md-12 col-lg-5 center-x">
+                <form id="id-form-reset-password">
+                    {% csrf_token %}
+                    <input type="hidden" name="estudiante_id" value="{{ persona.id }}">
+                    <div class="card shadow mb-5">
+                        <div class="card-header">
+                            <h5 class="mb-2 font-weight-normal text-center">Cambio de contraseña</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="pswd_info" style="font-size:12px">
+                                <h6>La contraseña <i class="fa fa-lock text-primary"></i> debe cumplir con los
+                                    siguientes parámetros:</h6>
+                                <ul>
+                                    <li id="letter" style="display: none">Al menos <strong>una letra.</strong></li>
+                                    <li id="capital">Al menos <strong>una letra en mayúscula.</strong></li>
+                                    <li id="number">Al menos <strong>un número.</strong></li>
+                                    <li id="length">Mínimo ha de contener <strong>8 caracteres.</strong></li>
+                                    <li id="nuevarepetir">Confirmar contraseña <strong>debe ser igual</strong> a la
+                                        nueva contraseña.
+                                    </li>
+                                </ul>
+                            </div>
+                            <br>
+                            <div class="text-center" style="min-height: 2rem">
+                                <div id="id-mensaje" style="display: none">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-left: 20px;margin-right: 20px">
+                                <div class="form-row">
+                                    <div class="form-group col-md">
+                                        <label for="">Cédula: </label>
+                                        <div class="">
+                                            <input type="text" class="form-control mt-1" value="{{ persona.cedula }}"
+                                                   readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md">
+                                        <label for="">Estudiante: </label>
+                                        <div class="">
+                                            <input type="text" class="form-control mt-1" value="{{ persona.nombres }}"
+                                                   readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md">
+                                        <label for="">Nueva constraseña: </label>
+                                        <div class="">
+                                            <input type="password" class="form-control mt-1 valida-password"
+                                                   id="id-password"
+                                                   placeholder="Nueva constraseña"
+                                                   name="password"
+                                                   required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md">
+                                        <label for="">Confirmar constraseña: </label>
+                                        <div class="">
+                                            <input type="password" class="form-control mt-1 valida-password"
+                                                   id="id-password-repetir"
+                                                   placeholder="Confirmar constraseña" name="password_repetir"
+                                                   required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="checkbox mb-3 mt-1">
+                                    <label>
+                                        <input type="checkbox" name="norobot" required> No eres un Robot
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <a href="/" class="btn btn-info">
+                                <i class="fa fa-arrow-left"></i> Ir al Inicio
+                            </a>
+                            <button id="id-btn-send" class="btn bt-login btn-secondary float-right" disabled>
+                                <i class="fa fa-sign-in-alt"></i> Actualizar contraseña
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block footer %}
+    <footer id="id-footer" class="navbar navbar-expand-lg navbar-dark fixed-bottom bg-dark-50">
+        <div class="container-fluid">
+            <div class="col-md" style="font-size: 12px">
+                <span class="text-white fa-pull-left">Copyright © 2020</span>
+                <span class="fa-pull-right">
+               <a class="text-white" href="http://sitio.istvr.edu.ec/"
+                  style="font-family:Arial; letter-spacing:4px">
+                       www.istvr.edu.ec
+                    </a>
+           </span>
+            </div>
+        </div>
+    </footer>
+{% endblock %}
+{% block jscript %}
+    <script>
+        $(function () {
+            $('.valida-password').blur(function () {
+                $('#id-mensaje').fadeOut();
+            });
+            $('.valida-password').keyup(function () {
+                var pswd = $(this).val();
+                var habilitar = true;
+                if (pswd.length < 8) {
+                    $('#length').removeClass('valid').addClass('invalid');
+                    habilitar = false;
+                } else {
+                    $('#length').removeClass('invalid').addClass('valid');
+                }
+                if (pswd.match(/[A-z]/)) {
+                    $('#letter').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#letter').removeClass('valid').addClass('invalid');
+                }
+                if (pswd.match(/[A-Z]/) && pswd.match(/[a-z]/)) {
+                    $('#capital').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#capital').removeClass('valid').addClass('invalid');
+                }
+                if (pswd.match(/\d/)) {
+                    $('#number').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#number').removeClass('valid').addClass('invalid');
+                }
+                if ($("#id-password").val() == $("#id-password-repetir").val()) {
+                    $('#nuevarepetir').removeClass('invalid').addClass('valid');
+                } else {
+                    habilitar = false;
+                    $('#nuevarepetir').removeClass('valid').addClass('invalid');
+                }
+                if (habilitar) {
+                    $('#id-btn-send').attr('disabled', false);
+                    $('#id-btn-send').removeClass('btn-secondary').addClass('btn-primary');
+                    //$("#formbutton").show();
+                } else {
+                    $('#id-btn-send').attr('disabled', true);
+                    $('#id-btn-send').removeClass('btn-primary').addClass('btn-secondary');
+                }
+            });
+            $('#id-form-reset-password').on({
+                submit: function (e) {
+                    e.preventDefault();
+
+                    var frmData = new FormData($(this)[0]);
+                    $('#id-btn-send').attr('disabled', true);
+                    $('#id-mensaje').removeClass('alert alert-danger alert-success').fadeOut();
+
+                    $.ajax({
+                        url: '/seguridad/usuario-cambio-clave/',
+                        data: frmData,
+                        method: 'POST',
+                        dataType: 'json',
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                    }).done(function (data) {
+                        if (data.resp == true) {
+                            $('#id-mensaje').fadeIn().addClass('alert alert-success');
+                            $('#id-mensaje').html('<i class="fa fa-check"></i> <em>La contraseña se actualizo correctamente</em>');
+                            $('#id-btn-send').hide();
+                            setInterval(function () {
+                                window.location = '/'
+                            }, 3000);
+                            return;
+                        } else {
+                            $('#id-btn-send').attr('disabled', true);
+                            $('#id-mensaje').fadeIn().addClass('alert alert-danger');
+                            $('#id-mensaje').html('<i class="fa fa-ban"></i> <em>' + data.error + '</em>');
+                        }
+                        $('#id-btn-send').attr('disabled', false);
+                    }).fail(function (jqXHR, textStatus) {
+                        $('#id-mensaje').fadeIn().addClass('alert alert-danger');
+                        $('#id-mensaje').html('Error:Problemas de conexion con el servidor' + textStatus);
+                        $('#id-btn-send').attr('disabled', false);
+                    });
+                }
+            });
+        });
+    </script>
+{% endblock %}

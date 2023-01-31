@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+{% block main %}
+    <div id="wrapper" style="background: #f8f9fc">
+        <ul class="navbar-nav sidebar sidebar-dark accordion bg-gradient-primary d-none d-sm-block"
+            style="margin-top: 2.4rem" id="accordionSidebar">
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center p-0"
+               href="https://www.istvr.edu.ec/" target="_blank">
+                <img src="/static/img/logo/logo_solo_50px.png" id="id-logo-solo" style="display: none">
+                <div class="sidebar-brand-text p-0">
+                    <img src="/static/img/logo/logo_blanco_350px.png" width="210">
+                </div>
+            </a>
+            <!-- Nav Item - Dashboard -->
+            <li class="nav-item active">
+                <a class="nav-link" href="/seguridad/dashboard">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a class="nav-link" href="/">
+                    <i class="fas fa-fw fa-home"></i>
+                    <span>Inicio</span>
+                </a>
+            </li>
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading text-white">
+                <span>Cuenta</span>
+            </div>
+
+            <li class="nav-item">
+                <a class="nav-link" href="/seguridad/cambiar/password/interno">
+                    <i class="fas fa-fw fa-lock"></i>
+                    <span>Cambiar contraseña</span>
+                </a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading text-white">
+                Servicios
+            </div>
+
+            <!-- Nav Item - Pages Collapse Menu -->
+            <li class="nav-item">
+                <a class="nav-link" href="http://eva.istvr.edu.ec/" target="_blank">
+                    <i class="fas fa-fw fa-book-open"></i>
+                    <span>EVA-Aula Virtual</span>
+                </a>
+                <a class="nav-link"
+                   href="https://accounts.google.com/signin/v2/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2F&service=mail&sacu=1&rip=1&flowName=GlifWebSignIn&flowEntry=ServiceLogin"
+                   target="_blank">
+                    <i class="fas fa-fw fa-mail-bulk"></i>
+                    <span>Cuenta Institucional Gmail</span>
+                </a>
+                <a class="nav-link" href="#">
+                    <i class="fas fa-fw fa-book-reader"></i>
+                    <span>Revista</span>
+                </a>
+
+                <a class="nav-link" href="#">
+                    <i class="fas fa-fw fa-school"></i>
+                    <span>Biblioteca</span>
+                </a>
+            </li>
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading text-white">
+                Redes Sociales
+            </div>
+            <br>
+            <div class="m-1 text-center">
+                <a href="https://www.facebook.com/ISTVR/" target="_blank" class="btn btn-primary btn-circle mb-1">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="https://twitter.com/istvr_edu_ec" target="_blank" class="btn btn-info btn-circle mb-1">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="https://www.youtube.com/channel/UCETwbD54tQBqDi5sqXVbJQw" target="_blank"
+                   class="btn btn-danger btn-circle mb-1">
+                    <i class="fab fa-youtube"></i>
+                </a>
+                <a href="https://www.instagram.com/istvr_edu_ec/" target="_blank" class="btn btn-light btn-circle mb-1">
+                    <i class="fab fa-instagram"></i>
+                </a>
+
+            </div>
+            <br>
+            <hr class="sidebar-divider">
+
+            <!-- Nav Item - Pages Collapse Menu -->
+            <li class="nav-item">
+            </li>
+
+            <!-- Nav Item - Charts -->
+            <li class="nav-item">
+            </li>
+
+            <!-- Nav Item - Tables -->
+            <li class="nav-item">
+            </li>
+            <!-- Divider -->
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0 ml-1" id="sidebarToggle"
+                        onclick="$('#id-logo-solo').toggle();"></button>
+            </div>
+
+        </ul>
+        <!-- Begin Page Content -->
+        <div class="container-fluid mb-3" style="margin-top: 3.2rem">
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Panel administrativo - {{ periodo }}</h1>
+                <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+                        class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
+            </div>
+            <div class="row">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Estudiantes
+                                        Matriculados
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold">{{ matriculados }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-clipboard-list fa-2x text-primary"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Estudiantes
+                                        Aceptados
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold">{{ aceptados }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-users fa-2x text-success"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-danger shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Estudiantes
+                                        Denegados
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold">{{ denegados }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-users fa-2x text-danger"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Estudiantes
+                                        Pendientes
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold">{{ pendientes }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-users fa-2x text-warning"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row">
+                <!-- Area Chart -->
+                <div class="col-xl col-lg">
+                    <div class="card shadow mb-4">
+                        <!-- Card Header - Dropdown -->
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">Matriculados por malla académico / Niveles</h6>
+                            <div class="dropdown no-arrow">
+                                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                </a>
+                                <!--div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                                     aria-labelledby="dropdownMenuLink">
+                                    <div class="dropdown-header">Dropdown Header:</div>
+                                    <a class="dropdown-item" href="#">Action</a>
+                                    <a class="dropdown-item" href="#">Another action</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="#">Something else here</a>
+                                </div-->
+                            </div>
+                        </div>
+                        <!-- Card Body -->
+                        <div class="card-body table-responsive p-0">
+                            <table id="id-tabla-matriculados"
+                                   class="table table-striped table-bordered table-sm sm-0 dataTable no-footer"
+                                   role="grid">
+                                <thead class="text-center text-sm-center thead-light">
+                                <tr role="row">
+                                    <th>Num.</th>
+                                    <th>Malla Académico</th>
+                                    <th>1ER</th>
+                                    <th>2DO</th>
+                                    <th>3ER</th>
+                                    <th>4TO</th>
+                                    <th>5TO</th>
+                                    <th>6TO</th>
+                                    <th>TOTAL</th>
+                                </tr>
+                                </thead>
+                                <tbody class="table-sm">
+                                {% for m in malla_matriculados %}
+                                    <tr>
+                                        <td align="center">{{ forloop.counter }}</td>
+                                        <td>
+                                            <b>{{ m.pensum }}</b>
+                                        </td>
+                                        {% for n in m.niveles %}
+                                            <td align="center">{{ n.total }}</td>
+                                        {% endfor %}
+                                        <td align="center">
+                                            <b>{{ m.total }}</b>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="3">
+                                            No se encontró registros..
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row">
+                <!-- Area Chart -->
+                <div class="col-xl-6 col-lg-6">
+                    <div class="card shadow mb-4">
+                        <!-- Card Header - Dropdown -->
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">Matriculados por carrera</h6>
+                            <div class="dropdown no-arrow">
+                                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                </a>
+                                <!--div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                                     aria-labelledby="dropdownMenuLink">
+                                    <div class="dropdown-header">Dropdown Header:</div>
+                                    <a class="dropdown-item" href="#">Action</a>
+                                    <a class="dropdown-item" href="#">Another action</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="#">Something else here</a>
+                                </div-->
+                            </div>
+                        </div>
+                        <!-- Card Body -->
+                        <div class="card-body table-responsive p-0">
+                            <table id="id-tabla-matriculados"
+                                   class="table table-striped table-bordered table-sm sm-0 dataTable no-footer"
+                                   role="grid">
+                                <thead class="text-center text-sm-center thead-light">
+                                <tr role="row">
+                                    <th>Cod.</th>
+                                    <th>Carrera</th>
+                                    <th>Matriculados</th>
+                                </tr>
+                                </thead>
+                                <tbody class="table-sm">
+                                {% for m in carrera_matriculados %}
+                                    <tr>
+                                        <td align="center">{{ m.pensum__carrera_id }}</td>
+                                        <td>
+                                            <b>{{ m.carrera }}</b>
+                                        </td>
+                                        <td align="center"><b>{{ m.matriculados }}</b></td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="3">
+                                            No se encontró registros..
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+        <!-- /.container-fluid -->
+    </div>
+
+{% endblock %}
+
+{% block footer %}
+    <footer id="id-footer" class="navbar navbar-expand-lg navbar-dark fixed-bottom bg-dark-50">
+        <div class="container-fluid">
+            <div class="col-md" style="font-size: 12px">
+                <span class="text-white fa-pull-left">Copyright © 2020</span>
+                <span class="fa-pull-right">
+                    <a class="text-white" href="http://sitio.istvr.edu.ec/"
+                       style="font-family:Arial; letter-spacing:4px">
+                       www.istvr.edu.ec
+                    </a>
+                </span>
+            </div>
+        </div>
+    </footer>
+{% endblock %}

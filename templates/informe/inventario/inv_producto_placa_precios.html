@@ -1,0 +1,81 @@
+{% extends "informe/base.html" %}
+{% load humanize %}
+{% block headcss %}
+    <style xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+        @page {
+            size: A4 portrait;
+            margin-left: 1cm;
+            margin-right: 1cm;
+            margin-top: 1cm;
+            margin-bottom: 1cm;
+
+            @frame header {
+            -pdf-frame-content: page-header;
+            margin-top: 1cm;
+            margin-right: 1cm;
+            margin-bottom: 0cm;
+            margin-left: 1cm;
+        }
+        @frame footer {
+        -pdf-frame-content:page-footer;
+        bottom: 0cm;
+        margin-left: 1cm;
+        margin-right: 1cm;
+        height: 1cm;
+        }
+        }
+    </style>
+{% endblock %}
+{% block main %}
+    <table border="0" cellpadding="2" cellspacing="2">
+        {% for p in productos %}
+            <tr>
+               <td>
+                   <div style="border: 1px solid #000000;padding: 6px;text-align: center">
+                       <b style="font-size: 11px">{{ p.0.nombre }}</b><br><br>
+                       <b style="font-size: 14px">Und: </b>
+                       <b style="font-size: 20px">
+                           ${{ p.0.unidad }}
+                       </b><br>
+                       <b style="font-size: 12px">Docena: ${{ p.0.docena }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Caja: ${{ p.0.caja }}</b>
+                       <br>
+                       <b style="text-align: left">Cod:{{ p.0.codigo }}</b>
+                   </div>
+               </td>
+               <td>
+                  <div style="border: 1px solid #000000;padding: 6px;text-align: center">
+                       <b style="font-size: 11px">{{ p.1.nombre }}</b><br><br>
+                       <b style="font-size: 14px">Und: </b>
+                       <b style="font-size: 20px">
+                           ${{ p.1.unidad }}
+                       </b><br>
+                       <b style="font-size: 12px">Docena: ${{ p.1.docena }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Caja: ${{ p.1.caja }}</b>
+                       <br>
+                       <b style="text-align: left">Cod:{{ p.1.codigo }}</b>
+                   </div>
+
+               </td>
+               <td>
+                   <div style="border: 1px solid #000000;padding: 6px;text-align: center">
+                       <b style="font-size: 11px">{{ p.2.nombre }}</b><br><br>
+                       <b style="font-size: 14px">Und: </b>
+                       <b style="font-size: 20px">
+                           ${{ p.2.unidad }}
+                       </b><br>
+                       <b style="font-size: 12px">Docena: ${{ p.2.docena }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Caja: ${{ p.2.caja }}</b>
+                       <br>
+                       <b style="text-align: left">Cod:{{ p.2.codigo }}</b>
+                   </div>
+               </td>
+            </tr>
+        {% empty %}
+        {% endfor %}
+    </table>
+{% endblock %}
+{% block footer %}
+    <div id="page-footer" style="text-align: center">
+        Pág.
+        <pdf:pagenumber> de
+            <pdf:pagecount>
+    </div>
+{% endblock %}

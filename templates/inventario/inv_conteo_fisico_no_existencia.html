@@ -1,0 +1,845 @@
+{% extends 'base.html' %}
+{% block headcss %}
+    <link rel="stylesheet" href="/static/css/easy-autocomplete.min.css">
+    <style>
+        .blink {
+            animation: blinker 1s step-start infinite;
+        }
+
+        @keyframes blinker {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        @media (min-width: 992px) {
+
+            .gedf-card {
+                margin-bottom: 2.77rem;
+            }
+        }
+
+        .easy-autocomplete input {
+            border-radius: 0;
+        }
+
+        #id-table-buscar-filtro tbody {
+            display: block;
+            height: 280px;
+            overflow: auto;
+        }
+
+        #id-table-buscar-filtro thead, #id-table-buscar-filtro tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        #id-table-buscar-filtro tbody tr {
+            cursor: pointer;
+        }
+
+        table.table-hover tbody tr:hover {
+            background-color: #b8daff;
+        }
+    </style>
+{% endblock %}
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+{% block main %}
+    <div class="container-fluid" style="margin-top: 2.8rem">
+        <div class="row">
+            <article class="col">
+                <div class="card mb-5">
+                    <div class="card-header p-1">
+                        <div class="btn-toolbar justify-content-between">
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-secondary btn-sm" type="button" id="btnAdd" data-toggle="tooltip"
+                                        data-placement="top" title="Nueva factura" disabled>
+                                    <i class="fa fa-plus"></i> <span
+                                        class="d-none d-sm-block d-sm-none"><b>NUEVO [F1]</b></span>
+                                </button>
+
+                                <button type="button"
+                                        onclick="if(confirm('Desea cancelar la factura')){ window.location.reload();}"
+                                        class="btn btn-danger btn-sm" id="id-btn-cancelar-documento"
+                                        data-toggle="tooltip"
+                                        data-placement="top" title="Cancelar documento de venta">
+                                    <i class="fa fa-ban"></i> <span
+                                        class="d-none d-sm-block d-sm-none"><b>CANCELAR [ESC]</b></span>
+                                </button>
+
+                                <button class="btn btn-success btn-sm id-btn-guardar-transferencia" type="button" id="id-btn-guardar-transferencia"
+                                        data-toggle="tooltip" data-opcion="1" data-proceso ="Transferencia"
+                                        data-placement="top" title="Generar Transferencia">
+                                    <i class="fa fa-recycle"></i> <span
+                                        class="d-none d-sm-block d-sm-none"><b>TRANSFERENCIA [F2]</b></span>
+                                </button>
+
+                                <button class="btn btn-primary btn-sm id-btn-guardar-transferencia" type="button" id="id-btn-ajustar-inventario"
+                                        data-toggle="tooltip" data-opcion="0" data-proceso ="Ajuste"
+                                        data-placement="top" title="Ajustar Inventario">
+                                    <i class="fa fa-save"></i> <span
+                                        class="d-none d-sm-block d-sm-none"><b>AJUSTAR [F3]</b></span>
+                                </button>
+
+                            </div>
+                            <div class="lower bg-dark text-white p-0 m-0 text-center">
+                                <div class="d-flex flex-column p-1" style="font-size: 11px">
+                                    <b>TOTAL</b>
+                                </div>
+                                <div class="pl-2 pr-2 m-0" style="width: 16rem">
+                                    <span class="h5" style="color: #01ff70;font-family:'Arial Black'"
+                                          id="id-total-pagar-display">
+                                        $0.00
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-1">
+                        <fieldset class="tab-content m-0" id="myTabContent">
+                            <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+                                <div class="form-row">
+                                    <div class="col-md-3 col-6">
+                                        <div class="input-group input-group mt-1 id-click-fecha">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">
+                                                    <i class="fa fa-calendar"></i>
+                                                </span>
+                                            </div>
+                                            <input type="text" id="id-fecha" name="fecha"
+                                                   value="{{ toma_fisico.fecha|date:"d/m/Y" }}"
+                                                   class="form-control bg-white" data-toggle-date="datepicker"
+                                                   data-toggle="tooltip" data-placement="top" title="Fecha de factura"
+                                                   required
+                                                   readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <div class="input-group input-group mt-1">
+                                            <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <b>Empresa</b>
+                                        </span>
+                                            </div>
+                                            <select class="custom-select">
+                                                <option value="">---------</option>
+                                                {% for d in divisiones %}
+                                                    <option
+                                                            value="{{ d.id }}"
+                                                            {% if d.id == toma_fisico.division.id %}
+                                                            selected
+                                                            {% endif %}
+                                                    >{{ d.nombre }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <div class="input-group input-group mt-1">
+                                            <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <b>Sucursal</b>
+                                        </span>
+                                            </div>
+                                            <input type="text" id="id-bodega" name="bodega"
+                                                   value="{{ sucursal.codigo }}-{{ sucursal.nombre }}"
+                                                   class="form-control bg-white" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 col-6">
+                                        <div class="input-group input-group mt-1">
+                                            <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <b>Tipo</b>
+                                        </span>
+                                            </div>
+                                            <input type="text" value="{{ toma_fisico.tipo }}"
+                                                   class="form-control bg-white" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1 col-6">
+                                        <h5 class="mt-2">
+                                            <span class="badge badge-{% if toma_fisico.estado == '1' %}warning{% elif toma_fisico.estado == '2' %}success{% else %}danger{% endif %} btn-block p-2">
+                                                {{ toma_fisico.get_estado_display }}
+                                            </span>
+                                        </h5>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col-md-3 col-6">
+                                        <div class="input-group input-group mt-1">
+                                            <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <b>Bodega T.Física</b>
+                                        </span>
+                                            </div>
+                                            <input type="text" id="id-bodega" name="bodega"
+                                                   value="{{ toma_fisico.bodega.codigo }}-{{  toma_fisico.bodega.nombre }}"
+                                                   class="form-control bg-white" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-6">
+                                        <div class="input-group input-group mt-1">
+                                            <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <b>B.Origen</b>
+                                        </span>
+                                            </div>
+                                            <select class="custom-select" id="id-bodega-origen">
+                                                <option value="">---------</option>
+                                                {% for b in bodegas_destino %}
+                                                    <option
+                                                            value="{{ b.id }}"
+                                                            {% comment %}{% if b.id == toma_fisico.bodega.id %}
+                                                            selected
+                                                            {% endif %}{% endcomment %}
+                                                    >{{ b.nombre }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-6">
+                                        <div class="input-group input-group mt-1">
+                                            <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <b>B.Destino</b>
+                                        </span>
+                                            </div>
+                                            <select class="custom-select" id="id-bodega-destino">
+                                                <option value="">---------</option>
+                                                {% for b in bodegas_destino %}
+                                                    <option value="{{ b.id }}">
+                                                        {#                                                            {% if b.id == toma_fisico.bodega_destino.id %}#}
+                                                        {#                                                            selected#}
+                                                        {#                                                            {% endif %}>#}
+                                                        {{ b.nombre }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="col-md-12 col">
+                                        <div class="input-group input-group mt-1">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><b>Detalle</b></span>
+                                            </div>
+                                            <input type="text" id="id-detalle" class="form-control"
+                                                   value="{{ toma_fisico.detalle }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="id-contenedor-detalle-toma_fisico" class="row">
+                                    <div class="col-md-12 mt-1">
+                                        <table id="id-table-detalle-toma_fisico"
+                                               class="table table-bordered table-hover table-striped table-sm p-0"
+                                               style="border: solid 1px #ccc">
+                                            <thead class="text-center text-sm-center thead-dark small"
+                                                   style="font-size: 13px">
+                                            <tr>
+                                                <th>
+                                                     <label class="custom-control custom-checkbox pt-0">
+                                                        <input type="checkbox" name="todos"
+                                                               class="custom-control-input checkbox-filter acc-todos"
+                                                               rel="accion">
+                                                        <span class="custom-control-indicator"></span>
+                                                    </label>
+                                                </th>
+                                                <th>Cod.</th>
+                                                <th>Producto</th>
+                                                <th>Formato</th>
+                                                <th>S.Stock</th>
+                                                <th>S.Caj.</th>
+                                                <th>S.Unds.</th>
+                                                <th>Costo Total</th>
+                                                <th class="p-0" align="center" width="10">
+                                                    <button type="button" onclick="modelo.eliminar_lista();"
+                                                            class="btn btn-danger btn-sm p-1 m-0"
+                                                            title="Eliminar detalle">
+                                                        <i class="fa fa-minus-circle"></i>
+                                                    </button>
+                                                </th>
+                                            </tr>
+                                            </thead>
+                                            <tbody style="font-size: 12px">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md">
+                                        <table class="table table-striped table-sm sm-0 m-0 p-0 table-light"
+                                               id="tab_logic_total">
+                                            <tbody>
+                                            <tr style="font-size: 12px;" class="bg-gradient-primary text-white">
+                                                <td colspan="2">
+                                                    <b class="text-white">Items:</b>
+                                                    <span id="id-items-lista" class="badge badge-secondary"
+                                                          style="font-size: 12px">0</span>
+                                                </td>
+                                                <th>
+                                                </th>
+                                            </tr>
+                                            <tr>
+                                                <th width="34%">
+                                                </th>
+                                                <th class="text-right align-middle" width="24%">Total</th>
+                                                <td class="p-0">
+                                                    <div class="input-group input-group-sm">
+                                                        <div class="input-group-prepend">
+                                                            <div class="input-group-text">
+                                                                <i class="fa fa-dollar-sign"></i>
+                                                            </div>
+                                                        </div>
+                                                        <input type="text"
+                                                               style="color: #00e765;font-weight: bolder;font-size: 14px"
+                                                               placeholder='0.00'
+                                                               class="form-control text-right input-lg bg-dark m-0"
+                                                               id="id-total-pagar" readonly/>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="card-footer text-right d-none d-sm-block">
+                        <a href="javascript: if(confirm('Desea Salir del conteo físico')){ window.location='/inventario/fisico/';}"
+                           class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"></i> Salir
+                        </a>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+    <div class="modal fade bd-example-modal-lg" id="id-modal-guardar-documento" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="id-form-modal-guardar-toma_fisico">
+                    <input type="hidden" id="id-accion-imprimir" value="1">
+                    <input type="hidden" id="id-opcion">
+                    <div class="modal-header table-info p-2">
+                       <h5 class="modal-title" id="exampleModalLongTitle">
+                           <span class="fa fa-exclamation-triangle" style="font-size: 20px"></span> Guardar Proceso</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="col-md ml-4" id="id-contenedor-opciones">
+                            <p style="font-size: 20px">¿Está seguro que desea continuar con el proceso de <b id="mensaje"
+                            style="color: red"></b></p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="col-md text-right">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                <i class="fa fa-window-close"></i> Cancelar
+                            </button>
+                            <button id="id-btn-modal-guardar" rel="btn-accion-guardar" value="0"
+                                    class="btn btn-success">
+                                <i class="fa fa-save"></i> Guardar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block footer %}
+    <footer class="navbar navbar-expand-lg navbar-dark fixed-bottom bg-dark d-block d-sm-none p-2">
+        <div class="container" id="id-foot-menu">
+            <div class="col-md-7 col-7 text-white">
+                Total: <b id="id-total-pagar-foot" style="color: #00e765;font-size:x-large">0.00</b>
+            </div>
+            <div class="col-md-5 col-5 text-center">
+                <button onclick="$('#id-btn-guardar-factura').click();" data-toggle="tooltip"
+                        data-placement="top"
+                        title="Guardar orden de pedido" class="btn btn-success btn-block">
+                    <span class="fa fa-save"></span> <b>Guardar</b>
+                </button>
+            </div>
+        </div>
+    </footer>
+{% endblock %}
+
+{% block js %}
+    <script id="js-template-detalle-toma_fisico" type="text/x-jsrender">
+[%for items%]
+ <tr>
+    <td width="2%" class="align-middle p-0">
+        <label class="custom-control custom-checkbox pt-0">
+            <input type="checkbox" name="datos" class="custom-control-input checkbox-filter" rel="accion" id="[%:productoid%]" >
+            <span class="custom-control-indicator"></span>
+        </label>
+    </td>
+    <td width="40" class="align-middle p-0" align="center">
+       <b>[%:codigo%]</b>
+    </td>
+    <td width="20%" style="max-width: calc( 20 * 1vw )"
+        class="text-truncate align-middle p-0 ">
+        <span class="text" [%if cantidad.toFixed(2) <= 0 %] style="color:red"[%/if%]
+        tabindex="0" data-toggle="tooltip" title="[%:nombre%]"><b>[%:nombre%]</b></span>
+    </td>
+    <td width="10%" align="center" style="max-width: calc( 10 * 1vw )" class="text-truncate align-middle p-0">
+       <b>[%:formato%]</b>
+    </td>
+
+    <td width="10%" class="align-middle p-0 table-warning" align="center">
+       <b style="font-size: 14px;">[%:stock.toFixed(2)%]</b>
+    </td>
+    <td width="10" align="center" class="align-middle p-0">
+       <b>[%:cajas.toFixed(2)%]</b>
+    </td>
+
+    <td width="10" class="align-middle p-0" align="center">
+       <b>[%:unidades.toFixed(2)%]</b>
+    </td>
+    <td width="80" class="align-middle p-0">
+        <input type="text" placeholder='0.00' style="font-size: 14px;font-weight: bold"
+               class="form-control form-control-sm text-right bg-white total text-bold"
+               value="$[%:costo_total%]" readonly/>
+    </td>
+    <td width="10" align="center" class="align-middle p-0">
+        <button onclick="modelo.eliminar('[%:codigo%]','[%:productoid%]');" class="btn btn-danger btn-sm m-0 p-1" tabindex="0" data-toggle="tooltip" title="Eliminar Item" >
+          <i class="fa fa-minus-circle"></i>
+        </button>
+    </td>
+ </tr>
+[%/for%]
+
+
+    </script>
+    <script src="/static/lib/jquery.easy-autocomplete.min.js"></script>
+    <script src="/static/lib/jsrender.min.js"></script>
+    <!--script src="/static/lib/jquery.slimscroll.min.js"></script-->
+    <script src="/static/lib/shortcut.js"></script>
+    <script src="/static/js/validador.js"></script>
+
+{% endblock %}
+{% block jscript %}
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+            $.views.settings.delimiters("[%", "%]");
+
+            $('[data-toggle-date="datepicker"]').datepicker({
+                format: 'dd/mm/yyyy',
+                autoHide: true,
+                language: 'es-ES',
+                zIndex: 2048,
+                endDate: {{ hoy|date:"d/m/Y" }}
+            });
+
+            shortcut.add("f1", function () {
+                let e = $('#btnAdd');
+                if (!e.prop('disabled')) {
+                    e.click();
+                }
+            });
+
+            shortcut.add("f2", function () {
+                let e = $('#id-btn-generar-transferencia');
+                if (!e.prop('disabled')) {
+                    e.click();
+                }
+            });
+
+            shortcut.add("f3", function () {
+                let e = $('#id-btn-ajustar-inventario');
+                if (!e.prop('disabled')) {
+                    e.click();
+                }
+            });
+
+            shortcut.add("esc", function () {
+                $('#id-btn-cancelar-documento').click();
+            });
+
+            $('input[type="checkbox"].acc-todos').on('change', function (e) {
+                e.preventDefault();
+                let todos = $(this).prop('checked');
+
+                $("#id-table-detalle-toma_fisico").find("input[type=checkbox].checkbox-filter").each(function (index, field) {
+                    if (todos) {
+                        $(field).attr('checked', 'checked');
+                        $(field).prop('checked', true);
+                    } else {
+                        $(field).removeAttr('checked', 'checked');
+                        $(field).prop('checked', false);
+                    }
+
+                    let item = {
+                        productoid: $(field).attr('id'),
+                        seleccionado: $(field).prop('checked'),
+                    };
+                    modelo.actualizar_seleccion(item);
+                });
+            });
+
+            $('#id-table-detalle-toma_fisico > tbody').on('change', 'input[rel="accion"].checkbox-filter', function (e) {
+                e.preventDefault();
+                let productoid = $(this).attr('id');
+                let seleccionado = $(this).prop('checked');
+                let item = {
+                    productoid: productoid,
+                    seleccionado: seleccionado,
+                };
+                modelo.actualizar_seleccion(item);
+            });
+
+            /*('#id-contenedor-detalle-toma_fisico').slimscroll({
+                height: '60vh',
+            });
+
+            $('#id-table-buscar-filtro tbody').slimscroll({
+                height: '300px',
+            });*/
+
+            $('#btnAdd').on('click', function (e) {
+                e.preventDefault();
+                $('#myTabContent').prop('disabled', false);
+                $('#id-btn-generar-transferencia').prop('disabled', false);
+                $('#btnAdd').prop('disabled', true);
+                $('#id-input-codigo-barra').val('').focus();
+            });
+
+            $('#id-table-detalle-toma_fisico > tbody').on('change', '.cantidad', function (e) {
+                var element = $(this);
+                if (Number(element.val()) >= 0 && element.val().length) {
+                    var item = element.data('json');
+                    var cantidad;
+                    if (item.balanza == 1) {
+                        cantidad = Number(element.val());
+                    } else {
+                        cantidad = Math.trunc(Number(element.val()));
+                        if (cantidad <= 0) cantidad = 1;
+                    }
+                    item.cantidad = cantidad;
+                    modelo.editar(item);
+                    modelo.actualizar();
+                }
+            });
+
+            $('#id-table-detalle-toma_fisico > tbody').on('keydown', '.cantidad', function (e) {
+                var keyCode = (e.keyCode ? e.keyCode : e.which);
+                if (keyCode == 13) {
+                    var element = $(this);
+                    if (Number(element.val()) >= 0 && element.val().length) {
+                        var item = element.data('json');
+                        var cantidad;
+                        if (item.balanza == 1) {
+                            cantidad = Number(element.val());
+                        } else {
+                            cantidad = Math.trunc(Number(element.val()));
+                            if (cantidad <= 0) cantidad = 1;
+                        }
+                        item.cantidad = cantidad;
+                        modelo.editar(item);
+                        modelo.actualizar();
+                    }
+                }
+            });
+
+            $('#id-table-detalle-toma_fisico > tbody').on('click', 'button.vmax,button.vmin', function (e) {
+                let operador = $(this).data('operador');
+                let input = $(this).closest('td').find('.cantidad');
+                let valor = Number(input.val());
+                valor += operador == '+' ? 1 : -1;
+                if (valor > 0) {
+                    input.val(valor);
+                } else {
+                    input.val(1);
+                }
+                input.change();
+            });
+
+            $("input[rel=seleccion]")
+                .focus(function () {
+                    $(this).select();
+                })
+                .mouseup(function (e) {
+                    e.preventDefault();
+                });
+
+            $('.id-btn-guardar-transferencia').on('click', function (e) {
+                e.preventDefault();
+                let element = $(this);
+                let opcion = Number(element.data('opcion'));
+
+                $('#id-opcion').val(opcion);
+                let bodega_origen = $('#id-bodega-origen');
+                let bodega_destino = $('#id-bodega-destino');
+                let bodega_toma_fisica = $('#id-bodega-toma-fisica');
+                let fecha = $('#id-fecha');
+                let detalle = $('#id-detalle');
+
+                if (detalle.val() == '' || detalle.val().length <= 0) {
+                    fnToast('Debe ingresar el detalle de la toma_fisico.', 3);
+                    detalle.focus();
+                    return;
+                }
+
+                if (opcion==1){
+                        if (bodega_origen.val() == '') {
+                        fnToast('No ha seleccionado la bodega de origen.', 3);
+                        bodega_origen.focus();
+                        return;
+                    }
+
+                    if (bodega_destino.val() == '') {
+                        fnToast('No ha seleccionado la bodega de destino.', 3);
+                        bodega_destino.focus();
+                        return;
+                    }
+                }
+
+                if (modelo.verificar_existencia() <=  0) {
+                    fnToast('No ha seleccionado productos para procesar', 3);
+                    return;
+                }
+
+                modelo.toma_fisico.bodega_origen_id = bodega_origen.val();
+                modelo.toma_fisico.bodega_destino_id = bodega_destino.val();
+                modelo.toma_fisico.bodega_toma_fisica = bodega_toma_fisica.val();
+                modelo.toma_fisico.fecha = fecha.val();
+                modelo.toma_fisico.detalle = detalle.val();
+
+                if (modelo.toma_fisico.items.length <= 0) {
+                    fnToast('No se ha ingresado ningun items al detalle.', 3);
+                    $('#id-nombre-producto').focus();
+                    return;
+                }
+
+                $("#mensaje").text(element.data("proceso")+" de Inventario ?");
+
+                $('#id-modal-guardar-documento').modal('show');
+
+            });
+
+
+            $('#id-form-modal-guardar-toma_fisico').on({
+                submit: function (e) {
+                    e.preventDefault();
+
+                    let opcion = $('#id-btn-guardar-transferencia').data('opcion')
+
+                    $('#id-btn-modal-guardar').prop('disabled', true);
+                    modelo.toma_fisico.fecha = $('#id-fecha').val();
+
+                    let transferencia = modelo.toma_fisico.items.filter(function (item) {
+                        return item.seleccionado === true
+                    })
+
+                    modelo.toma_fisico.items = transferencia;
+
+                    let seleccion = Number($('#id-opcion').val());
+                    let accion;
+                    let url;
+
+                    if (seleccion === 1){
+                        url= '/inventario/punto-tranferencia/crear/'
+                        accion = 'guardar-transferencia-fisico';
+                    }
+                    else {
+                        url = '/inventario/fisico/ingreso_egreso/';
+                        accion = 'guardar-ingreso-egreso';
+                    }
+
+                    $.ajax({
+                        url: url,
+                        data: {
+                            accion: accion,
+                            toma_fisico: JSON.stringify(modelo.toma_fisico),
+                            opcion: opcion
+                        },
+                        method: 'POST',
+                        dataType: 'json',
+                    }).done(function (data) {
+                        if (data.resp) {
+                            fnToast('Documento guardado correctamente.. ');
+                            window.location = '/inventario/fisico/conteo/'+ "{{ toma_fisico.id }}";
+                            return;
+                            modelo.resetForm();
+                        } else {
+                            fnToast(data.error, 3);
+                            $('#id-btn-modal-guardar').prop('disabled', false);
+                        }
+                    }).fail(function (jqXHR, textStatus) {
+                        $('#id-btn-modal-guardar').prop('disabled', false);
+                        fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                    }).always(function () {
+                        console.log("complete");
+                    });
+                }
+            });
+
+            modelo.actualizar();
+        });
+        var modelo = {
+            toma_fisico: {
+                id: '{{ toma_fisico.id }}',
+                numero: '{{ toma_fisico.numero }}',
+                detalle: '{{ toma_fisico.detalle.strip }}',
+                divisionid: '{{ toma_fisico.division.id }}',
+                fecha: '',
+                tipo: '',
+                bodega_toma_fisica: "{{ toma_fisico.bodega.id }}",
+                bodega_origen_id: "{{ toma_fisico.bodega_origen.id }}",
+                bodega_destino_id: "{{ toma_fisico.bodega_destino.id }}",
+                total: Number("{{ toma_fisico.total }}"),
+                items: [
+                    {% for item in productos_detalle %}
+                        {
+                            productoid: "{{ item.producto.id }}",
+                            codigo: "{{ item.producto.codigo }}",
+                            costo: Number("{{ item.producto.costo_promedio|default_if_none:"0" }}"),
+                            costo_total: Number("{{ item.get_costo_total }}"),
+                            formato: "{{ item.producto.descripcion|default_if_none:" " }}",
+                            nombre: "{{ item.producto.nombre }}",
+                            fisico_stock: Number("0.00"),
+                            fisico_cajas: Number("0.00"),
+                            fisico_unidades: Number("0.00"),
+                            stock: Number("{{ item.stock }}"),
+                            conversion: Number("{{ item.producto.conversion }}"),
+                            stock_conversion: Number("0.00"),
+                            cajas: Number("{{ item.get_cajas }}"),
+                            unidades: Number("{{ item.get_unidades }}"),
+                            cantidad:Number("{{ item.stock }}"),
+                            diferencia: Number("{{ item.stock }}"),
+                            empaque: "Und",
+                            factor: Number(1.00),
+                            seleccionado: false,
+                        }
+                        {% if not forloop.last %},
+                        {% endif %}
+                    {% endfor %}
+                ],
+                nota: '',
+                pc: '',
+                sucursalid: '{{ sucursal.id }}',
+                sucursal: '{{ sucursal.nombre }}',
+                observacion: ''
+            },
+            add: function (item) {
+                if (!this.existe(item)) {
+                    this.toma_fisico.items.push(item);
+                }
+                return true;
+            },
+            existe: function (item) {
+                for (var i in this.toma_fisico.items) {
+                    if (item.productoid == this.toma_fisico.items[i].productoid && item.codigo == this.toma_fisico.items[i].codigo) {
+                        this.toma_fisico.items[i].cantidad += item.cantidad;
+                        this.toma_fisico.items[i].seleccionado = item.seleccionado;
+                        return true;
+                    }
+                }
+                return false;
+            },
+            editar: function (item) {
+                for (var i in this.toma_fisico.items) {
+                    if (this.toma_fisico.items[i].productoid == item.productoid && this.toma_fisico.items[i].codigo == item.codigo) {
+                        this.toma_fisico.items[i].cantidad = item.cantidad;
+                        return true;
+                    }
+                }
+                return false;
+            },
+            eliminar: function (codigo, productoid) {
+                for (var i in this.toma_fisico.items) {
+                    if (this.toma_fisico.items[i].codigo == codigo && this.toma_fisico.items[i].productoid == productoid) {
+                        this.toma_fisico.items.splice(i, 1);
+                        this.actualizar();
+                        return true;
+                    }
+                }
+                return false;
+            },
+            eliminar_lista: function () {
+                if (this.toma_fisico.items.length > 0) {
+                    this.toma_fisico.items = [];
+                    this.actualizar();
+                }
+            },
+            actualizar: function () {
+                this.toma_fisico.total = 0;
+                for (var i in this.toma_fisico.items) {
+
+                    //this.toma_fisico.items[i].unidades = Math.round((this.toma_fisico.items[i].cantidad * this.toma_fisico.items[i].factor) * 100) / 100;
+                    this.toma_fisico.items[i].costo = Math.round(this.toma_fisico.items[i].costo * 10000) / 10000;
+                    this.toma_fisico.items[i].total = Math.round((this.toma_fisico.items[i].cantidad * this.toma_fisico.items[i].factor * this.toma_fisico.items[i].costo) * 100) / 100;
+                    this.toma_fisico.total += this.toma_fisico.items[i].total;
+                }
+                this.toma_fisico.total = Math.round(this.toma_fisico.total * 100) / 100;
+                let total_pagar = NumFormat(this.toma_fisico.total).toString();
+
+                $('#id-total-pagar').val(total_pagar);
+                $('#id-total-pagar-display').html('$' + total_pagar);
+                $('#id-total-pagar-foot').html('$' + total_pagar);
+
+                $('#id-items-lista').html(this.toma_fisico.items.length);
+                this.render();
+
+            },
+            empaque_selected: function (i) {
+                for (e of modelo.toma_fisico.items[i].empaques) {
+                    if (e.nombre == modelo.toma_fisico.items[i].empaque) {
+                        e.selected = true;
+                    } else {
+                        e.selected = false;
+                    }
+                }
+            },
+
+            actualizar_seleccion: function (item) {
+                for (var i in this.toma_fisico.items) {
+                    if (item.productoid == this.toma_fisico.items[i].productoid) {
+                        this.toma_fisico.items[i].seleccionado = item.seleccionado;
+                        return true;
+                    }
+                }
+                return false;
+            },
+
+            verificar_existencia : function (){
+              let items = modelo.toma_fisico.items.filter(function (item) {
+                   return item.seleccionado === true;
+              }).length
+              return items;
+            },
+
+            render: function () {
+                var tmpl = $.templates("#js-template-detalle-toma_fisico"); // Get compiled template
+                var html = tmpl.render(this.toma_fisico);      // Render template using data - as HTML string
+                $("#id-table-detalle-toma_fisico tbody").html(html);
+            },
+            resetForm: function () {
+                this.toma_fisico.detalle = '';
+                this.toma_fisico.nota = '';
+                this.toma_fisico.items = [];
+                this.actualizar();
+                $('#myTabContent').prop('disabled', true);
+                $('#btnAdd').prop('disabled', false);
+                $('#btnAdd').click();
+            },
+            set_scroll_end: function () {
+                let scroll = $('#id-contenedor-detalle-toma_fisico');
+                scroll.animate({scrollTop: scroll.prop("scrollHeight")});
+            }
+        };
+    </script>
+{% endblock %}

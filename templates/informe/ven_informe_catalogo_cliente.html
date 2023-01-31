@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block headcss %}
+    <link rel="stylesheet" href="/static/css/easy-autocomplete.min.css">
+    <style>
+        body {
+            overflow-x: hidden;
+        }
+
+        #wrapper {
+            padding-right: 0;
+            -webkit-transition: all 0.5s ease;
+            -moz-transition: all 0.5s ease;
+            -o-transition: all 0.5s ease;
+            transition: all 0.5s ease;
+        }
+
+        #wrapper.toggled {
+            padding-left: 220px;
+        }
+
+        #sidebar-wrapper {
+            z-index: 1000;
+            position: fixed;
+            width: 0;
+            height: 100%;
+            margin-left: -200px;
+            overflow-y: auto;
+            -webkit-transition: all 0.5s ease;
+            -moz-transition: all 0.5s ease;
+            -o-transition: all 0.5s ease;
+            transition: all 0.5s ease;
+        }
+
+        #wrapper.toggled #sidebar-wrapper {
+            width: 200px;
+        }
+
+        #page-content-wrapper {
+            width: 100%;
+            position: absolute;
+            padding: 15px;
+        }
+
+        #wrapper.toggled #page-content-wrapper {
+            position: absolute;
+            margin-left: 0px;
+        }
+
+
+        /* Sidebar Styles */
+
+        .sidebar-nav {
+            position: absolute;
+            top: 0;
+            width: 200px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            text-indent: 20px;
+            line-height: 40px;
+        }
+
+        .sidebar-nav li a {
+            display: block;
+            text-decoration: none;
+            color: #999999;
+        }
+
+        .sidebar-nav li a:hover {
+            text-decoration: none;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar-nav li a:active, .sidebar-nav li a:focus {
+            text-decoration: none;
+        }
+
+        .sidebar-nav > .sidebar-brand {
+            height: 65px;
+            font-size: 18px;
+            line-height: 60px;
+        }
+
+        .sidebar-nav > .sidebar-brand a {
+            color: #999999;
+        }
+
+        .sidebar-nav > .sidebar-brand a:hover {
+            color: #fff;
+            background: none;
+        }
+
+        @media (min-width: 768px) {
+            #wrapper {
+                padding-right: 0;
+            }
+
+            #wrapper.toggled {
+                padding-left: 200px;
+            }
+
+            #sidebar-wrapper {
+                width: 0;
+            }
+
+            #wrapper.toggled #sidebar-wrapper {
+                width: 200px;
+            }
+
+            #page-content-wrapper {
+                padding: 20px;
+                position: relative;
+            }
+
+            #wrapper.toggled #page-content-wrapper {
+                position: relative;
+                margin-left: 0;
+            }
+        }
+
+    </style>
+{% endblock %}
+
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+
+{% block main %}
+    <div class="container-fluid" style="margin-top: 2.6rem">
+        <div class="row">
+            <div class="col-lg-12">
+                <nav id="siteBreadcrumb" aria-label="breadcrumb">
+                    <ol class="breadcrumb p-2">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/informe/catalogo/clientes/">Informe catalogo</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        <div class="row">
+
+            <div id="wrapper" class="toggled" style="display: none">
+                <!-- Sidebar -->
+                <div id="sidebar-wrapper" class="card mt-auto">
+                    <div class="card-header">Grupos</div>
+                    <div class="card-body">Grupos</div>
+                </div> <!-- /#sidebar-wrapper -->
+                <!-- Page Content -->
+
+            </div> <!-- /#wrapper -->
+
+            <div class="col">
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <form id="id-form-buscar" action="" method="GET">
+                            {% csrf_token %}
+                            <div class="form-row align-items-center">
+                                <div class="col-xs-2 col-">
+                                    <button class="btn btn-secondary btn-sm p-1">
+                                        <i class="fa fa-list-alt"></i>
+                                    </button>
+                                </div>
+                                <div class="col-md-1 col-5 mt-1">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="inicio" id="id-date-inicio" value="{{ inicio }}"
+                                               class="form-control date-piker"
+                                               aria-describedby="inputGroup-sizing-sm"
+                                               placeholder="Fecha inicial" autocomplete="off">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" id="inputGroup-sizing-sm">
+                                                <i class="fa fa-calendar"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-1 col-5 mt-1">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="final" id="id-date-final" value="{{ final }}"
+                                               class="form-control date-piker"
+                                               aria-describedby="inputGroup-sizing-sm"
+                                               placeholder="Fecha final" autocomplete="off">
+                                        <div class="input-group-append">
+                                                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                                                        <i class="fa fa-calendar"></i>
+                                                    </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md input-group col-md-2 mt-1 input-group-sm">
+                                    <input type="text" name="s" value="{{ s }}" class="form-control"
+                                           placeholder="Buscar cliente.">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md input-group input-group-sm col-md-1 mt-1">
+                                    <select id="id-select-tipo-caja" name="tipo_caja" class="custom-select"
+                                            {% if disabled %}disabled{% endif %}>
+                                        <option value="">Tipo</option>
+                                        <option value="1" {% if tipo_caja == '1' %}selected{% endif %}>Cobertura</option>
+                                        <option value="0" {% if tipo_caja == '0' %}selected{% endif %}>Almacen</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md input-group input-group-sm col-md-1 mt-1">
+                                    <select id="id-select-usuario" name="usuarioid" class="custom-select">
+                                        <option value="">Usuarios</option>
+                                        {% for u in usuarios %}
+                                            <option value="{{ u.username }}"
+                                                    {% if usuarioid == u.username %}selected{% endif %}>{{ u.username }}</option>
+                                        {% endfor %}
+
+
+                                    </select>
+                                </div>
+                                <div class="col-md input-group input-group-sm col-md-1 mt-1">
+                                    <select id="id-select-vendedor" name="vendedorid" class="custom-select">
+                                        <option value="">Vendedor</option>
+                                        {% for v in vendedores %}
+                                            <option value="{{ v.id }}"
+                                                    {% if vendedorid == v.id %}selected{% endif %}>{{ v }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md input-group input-group-sm col-md-1 mt-1">
+                                    <select id="id-select-ciudadid" name="ciudadid" class="custom-select">
+                                        <option value="">Ciudades</option>
+                                        {% for c in ciudades %}
+                                            <option value="{{ c.id }}"
+                                                    {% if ciudadid == c.id %}selected{% endif %}>{{ c.codigo }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md input-group input-group-sm col-md-1 mt-1">
+                                    <select id="id-select-sectorid" name="sectorid" class="custom-select">
+                                        <option value="">Sectores</option>
+                                        {% for s in sectores %}
+                                            <option value="{{ s.id }}"
+                                                    {% if sectorid == s.id %}selected{% endif %}>{{ s.codigo }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md input-group input-group-sm col-md-1 mt-1">
+                                    <select id="id-select-zonaid" name="zonaid" class="custom-select">
+                                        <option value="">Zona</option>
+                                        {% for z in zonas %}
+                                            <option value="{{ z.id }}"
+                                                    {% if zonaid == z.id %}selected{% endif %}>{{ z.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md input-group input-group-sm col-md-1 mt-1 d-none">
+                                    <select id="id-select-division" name="divisionid" class="custom-select">
+                                        <option value="">Divisiones</option>
+                                        {% for d in divisiones %}
+                                            <option value="{{ d.id }}"
+                                                    {% if divisionid == d.id %}selected{% endif %}>{{ d }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md-1 col mt-1">
+                                    <button id="id-btn-fecha-submit" class="btn btn-sm btn-primary btn-block small">
+                                        Consultar <i class="fa fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-body table-responsive p-0">
+                        <table id="id-tabla-matriculados"
+                               class="table table-striped table-bordered table-sm sm-0 dataTable no-footer m-0"
+                               role="grid">
+                            <thead class="text-center text-sm-center thead-light">
+                            <tr role="row">
+                                <th colspan="4">
+                                </th>
+                                <th class="text-right"></th>
+                                <th class="">
+                                </th>
+                                <th class="text-right"><b>Ventas: </b></th>
+                                <th class="text-right">
+                                   <h4 class="m-0">
+                                        <span class="badge badge-primary">{{ page_obj.paginator.count }}</span>
+                                    </h4>
+                                </th>
+                                <th>
+                                    <div class="btn-group" role="group" aria-label="Basic example">
+                                        <button rel="imprimir" data-toggle="tooltip" title="Imprimir PDF"
+                                                data-tipo="PDF" class="btn btn-info btn-sm">
+                                            <i class="fa fa-print"></i>
+                                        </button>
+                                        <!--button rel="imprimir" data-toggle="tooltip" title="Informe Matriculados" data-tipo="EXCEL" class="btn btn-primary btn-sm">
+                                            <i class="fa fa-file-excel"></i>
+                                        </button-->
+                                        <button rel="imprimir" data-toggle="tooltip" title="Matriz MTN"
+                                                data-tipo="EXCEL-MTN" class="btn btn-success btn-sm">
+                                            <i class="fa fa-file-excel"></i>
+                                        </button>
+                                    </div>
+                                </th>
+                            </tr>
+                            <tr role="row" class="small">
+                                <th>F.Ult.Compra</th>
+                                <th>Cedula</th>
+                                <th>Cliente</th>
+                                <th>Telefono</th>
+                                <th>Direccion</th>
+                                <th>Sector</th>
+                                <th>Zona</th>
+                                <th>Valor/Ult.Compra</th>
+                                <th>Accion</th>
+                            </tr>
+                            </thead>
+                            <tbody class="table-sm small">
+                            {% for c in clientes %}
+                                <tr>
+                                    <td align="center"><b>{{ c.fecha|date:"d/m/Y" }}</b></td>
+
+                                    <td align="center">{{ c.ruc_ced }}</td>
+                                    <td>{{ c.nombre }}</td>
+                                    <td>{{ c.telefono }}</td>
+                                    <td>{{ c.direccion }}</td>
+                                    <td>{{ c.sector|default_if_none:""}}</td>
+                                    <td>{{ c.zona }}</td>
+                                    <td align="right"><b>${{ c.valor|floatformat:2|intcomma }}</b></td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button id="btnGroupDrop1" type="button"
+                                                    class="btn btn-primary dropdown-toggle btn-sm"
+                                                    data-toggle="dropdown"
+                                                    aria-haspopup="true" aria-expanded="false">
+                                                Acciones
+                                            </button>
+                                            <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                                <a href="{% url "cli_cliente_editar" c.cliente_id %}" rel="accion" class="dropdown-item sw-form-modal"
+                                                   data-id="{{ c.cliente_id }}">
+                                                    <i class="fa fa-edit text-primary"></i>Editar
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="10">
+                                        No se encontró registros..
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if is_paginated %}
+                        <div class="card-footer">
+                            <nav aria-label="Demo of disable class">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a href="?page={{ page_obj.previous_page_number }}{{ url }}"
+                                               class="page-link">&laquo; Atrás</a>
+                                        </li>
+
+                                        <li class="page-item">
+                                            <a href="?page=1" class="page-link">Inicio</a>
+                                        </li>
+
+                                    {% else %}
+                                        <li class="page-item disabled" style="pointer-events:none">
+                                            <a class="page-link">&laquo; Atrás</a>
+                                        </li>
+                                        <li class="page-item disabled" style="pointer-events:none">
+                                            <a href="#" class="page-link">Inicio</a>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for i in paginator.page_range %}
+                                        {% if i <= page_obj.number|add:2 and i >= page_obj.number|add:-2 %}
+                                            {% if page_obj.number == i %}
+                                                <li class="page-item active" style="pointer-events:none">
+                                                    <a href="#" class="page-link">{{ forloop.counter }}</a>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item">
+                                                    <a href="?page={{ forloop.counter }}{{ url }}"
+                                                       class="page-link">{{ forloop.counter }}</a>
+                                                </li>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a href="?page={{ page_obj.paginator.num_pages }}{{ url }}"
+                                               class="page-link">Final</a>
+                                        </li>
+
+                                        <li class="page-item">
+                                            <a href="?page={{ page_obj.next_page_number }}{{ url }}"
+                                               class="page-link">Siguiente &raquo;</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled" style="pointer-events:none">
+                                            <a href="#" class="page-link">Final</a>
+                                        </li>
+                                        <li class="page-item disabled" style="pointer-events:none">
+                                            <a class="page-link">Siguiente &raquo;</a>
+                                        </li>
+                                    {% endif %}
+
+                                </ul>
+                            </nav>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block jscript %}
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+
+            $('.date-piker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoHide: true,
+                language: 'es-ES',
+                zIndex: 2048
+            });
+        });
+    </script>
+{% endblock %}

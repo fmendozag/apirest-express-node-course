@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block headcss %}
+    <link rel="stylesheet" href="/static/css/select2.min.css">
+    <link rel="stylesheet" href="/static/css/select2-bootstrap4.min.css">
+{% endblock %}
+
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+
+{% block main %}
+    <article class="container-fluid" style="margin-top: 3.5rem">
+        <div class="row">
+            <div class="col">
+                <nav id="siteBreadcrumb" aria-label="breadcrumb">
+                    <ol class="breadcrumb p-2">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item" aria-current="page"><a
+                                href="/inventario/fisico/crear/">Toma fisico/crear</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 center-x">
+                <form method="POST" action="">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            Fichero de Distributivo : {{ accion }}
+                        </div>
+                        <div class="card-body">
+                            {% csrf_token %}
+                            <input type="hidden" value="
+
+                                    {% if distributivo is not Nose %}{{ distributivo.periodo_lectivo.id }}{% else %}{{ periodo.id }}{% endif %}"
+                                   name="periodo_lectivo">
+                            <div class="form-row">
+                                <div class="form-group col-md mb-0">
+                                    {{ form.fecha|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md mb-0">
+                                    {{ form.bodega|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md mb-0">
+                                    {{ form.detalle|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md mb-0">
+                                    {{ form.division|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-success float-right ml-2">
+                                <i class="fa fa-save"></i> Guardar Registro
+                            </button>
+
+                            <a href="" class="btn btn-danger float-right">
+                                <i class="fa fa-arrow-left"></i> Atras
+                            </a>
+
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </article>
+{% endblock %}
+
+{% block js %}
+    <script src="/static/js/select2.min.js"></script>
+    <script src="/static/dist/datepicker.min.js"></script>
+    <script src="/static/dist/datepicker.es-ES.js"></script>
+{% endblock %}
+
+{% block jscript %}
+    <script>
+        $(function () {
+
+            $('.date-piker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoHide: true,
+                language: 'es-ES',
+                zIndex: 2048
+            });
+
+            $('select.select2-design').each(function () {
+                $(this).select2({
+                    theme: 'bootstrap4',
+                    width: 'style',
+                    placeholder: $(this).attr('placeholder'),
+                    allowClear: Boolean($(this).data('allow-clear')),
+                });
+            });
+
+        });
+    </script>
+{% endblock %}

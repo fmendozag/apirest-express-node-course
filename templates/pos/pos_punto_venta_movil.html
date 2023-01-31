@@ -1,0 +1,3160 @@
+{% extends 'base.html' %}
+{% block headcss %}
+    <link rel="stylesheet" href="/static/css/easy-autocomplete.min.css">
+    <link rel="stylesheet" href="/static/css/pos.css">
+    <style>
+        #id-contenedor-camara video {
+            max-width: 100%;
+            width: 100%;
+        }
+
+        #id-contenedor-camara {
+            max-width: 100%;
+            position: relative;
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+
+        canvas.drawingBuffer {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+{% endblock %}
+{% block main %}
+    <div class="container-fluid" style="margin-top: 0.3rem">
+        <div class="row">
+            <article class="col">
+                <div class="card mb-5">
+                    <div class="card-header p-1 bg-gradient-light">
+                        <div class="btn-toolbar justify-content-between">
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-primary btn-sm" type="button" id="btnAdd" data-toggle="tooltip"
+                                        data-placement="top" title="Nueva factura"
+                                        {% if editar %}disabled{% endif %}>
+                                    <i class="fa fa-plus fa-2x"></i> <span
+                                        class="d-none d-sm-block d-sm-none"><b>NUEVO<br>[F1]</b></span>
+                                </button>
+                                <button type="button" class="btn btn-danger btn-sm" id="id-btn-cancelar-documento"
+                                        data-toggle="tooltip"
+                                        data-placement="top" title="Cancelar documento de venta">
+                                    <i class="fa fa-ban fa-2x"></i> <span
+                                        class="d-none d-sm-block d-sm-none"><b>CANCELAR<br>[ESC]</b></span>
+                                </button>
+                                <button class="btn btn-success btn-sm" type="button" id="id-btn-guardar-factura"
+                                        data-toggle="tooltip"
+                                        data-placement="top" title="Guardar documento de venta" disabled>
+                                    <i class="fa fa-save fa-2x"></i> <span
+                                        class="d-none d-sm-block d-sm-none"><b>GUARDAR<br>[F2]</b></span>
+                                </button>
+                                <button class="btn btn-warning btn-sm" type="button"
+                                        id="id-btn-show-modal-consultar-precio"
+                                        data-placement="top">
+                                    <i class="fa fa-search fa-2x"></i> <span
+                                        class="d-none d-sm-block d-sm-none"><b>BUSCAR<br>[F3]</b></span>
+                                </button>
+
+                                <button class="btn btn-secondary btn-sm" type="button" rel="btn-salir-pos-factura"
+                                        data-toggle="tooltip"
+                                        data-placement="top" title="Salir del punto de Venta.">
+                                    <i class="fa fa-arrow-left fa-2x"></i> <span
+                                        class="d-none d-sm-block d-sm-none"><b>SALIR<br>[F4]</b></span>
+                                </button>
+
+                            </div>
+                            <div class="lower p-0 m-0 text-center"
+                                 style="border: 1px solid #545b62;background: #000">
+                                <div class="d-flex flex-column p-0" style="font-size: 11px;color:#01ff70">
+                                    [{{ caja.codigo }}] {{ caja.nombre }}
+                                    <span style="font-size: 8px;height:8px" class="m-0">
+                                               <em id="id-display-actualizacion"
+                                                   style="display: none">Actualizando... </em>
+                                            </span>
+                                </div>
+                                <div class="pl-1 pr-2 m-0" style="width: 11rem">
+                                    <span class="h4" style="color: #01ff70;font-family:sans-serif;font-weight: bolder"
+                                          id="id-total-pagar-display">
+                                        $0.00
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <fieldset class="tab-content" id="myTabContent" {% if not editar %}disabled{% endif %}>
+                            <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+                                <div class="form-row ml-1 mr-1">
+                                    <div class="col-md-3 col-6">
+                                        <div class="input-group input-group mt-1 id-click-fecha">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">
+                                                    <i class="fa fa-calendar"></i>
+                                                </span>
+                                            </div>
+                                            <input type="text" id="id-fecha" name="fecha" value="{{ hoy|date:"d/m/Y" }}"
+                                                   class="form-control bg-white" data-toggle-date="datepicker"
+                                                   data-toggle="tooltip" data-placement="top" title="Fecha de factura"
+                                                   required
+                                                   readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <div class="input-group input-group mt-1">
+                                            <div class="input-group-prepend">
+                                                <button type="button" id="id-btn-forma-pago"
+                                                        class="btn btn-primary" data-toggle="tooltip"
+                                                        data-placement="top" title="Seleccione forma de pago" disabled>
+                                                    <i class="fa fa-credit-card"></i>
+                                                </button>
+                                            </div>
+                                            <select class="custom-select" id="id-select-form-pago">
+                                                <option value="EFE">EFECTIVO</option>
+                                                <option value="CRE" disabled>CREDITO</option>
+                                                <!--option value="CHE" disabled>CHEQUE</option-->
+                                                <!--option value="TAR" disabled>TARJETA</option-->
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-4 d-none d-sm-block d-sm-none d-md-block">
+                                        <div class="input-group input-group mt-1">
+                                            <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-building"></i>
+                                        </span>
+                                            </div>
+                                            <input type="text" id="id-bodega" name="bodega"
+                                                   value="{{ bodega.codigo }}-{{ bodega.nombre }}"
+                                                   class="form-control bg-white" required readonly>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-3 col-4 d-none">
+                                        <div class="input-group input-group mt-1">
+                                            <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-dollar-sign"></i>
+                                        </span>
+                                            </div>
+                                            <input type="text" id="id-lista-precio" name="lista_precio"
+                                                   value="{{ cliente.get_precio_activo_display }}"
+                                                   class="form-control bg-white" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-md d-none d-sm-block d-sm-none d-md-block">
+                                        <div class="input-group mt-1">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">
+                                                    <i class="fa fa-user-tag"></i>
+                                                </span>
+                                            </div>
+                                            <select class="custom-select" id="id-select-vendedor">
+                                                <option value="{{ cliente.vendedor.id }}">{{ cliente.vendedor.nombre }}</option>
+                                                {% for v in vendedores %}
+                                                    <option value="{{ v.id }}">{{ v.nombre }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row ml-1 mr-1">
+                                    <div class="col-md-3 col-4 mt-1 d-none d-sm-block d-sm-none d-md-block">
+                                        <form id="id-form-cliente">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                        <i class="fa fa-address-card"></i>
+                                                    </span>
+                                                </div>
+                                                <input type="text" rel="seleccion" id="id-cliente-ruc"
+                                                       name="cliente_ruc"
+                                                       value="{{ cliente.ruc }}"
+                                                       class="form-control cli-default" placeholder="Cédula o ruc"
+                                                       autocomplete="off" required>
+
+                                                <div class="input-group-append">
+                                                    <button type="submit"
+                                                            class="btn btn-primary" data-toggle="tooltip"
+                                                            data-placement="top" title="Buscar cliente">
+                                                        <i class="fa fa-search"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="col-md-6 col-md mt-1">
+                                        <div class="input-group input-group-sm">
+                                            <div class="input-group-prepend">
+                                                <button type="button" id="id-btn-registrar-cliente"
+                                                        class="btn btn-primary" data-toggle="tooltip"
+                                                        data-placement="top" title="Agregar cliente">
+                                                    <i class="fa fa-user-plus"></i>
+                                                </button>
+                                            </div>
+                                            <input type="text" id="id-cli-nombre" rel="seleccion"
+                                                   class="form-control cli-default" value="{{ cliente.nombre }}"
+                                                   maxlength="50" placeholder="Buscar cliente por nombres">
+
+                                            <div class="input-group-append">
+                                                <span class="input-group-text">
+                                                       <b id="id-termino-display">{{ termino.nombre }}</b>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-md mt-2 text-center d-none d-sm-block d-sm-none"
+                                         style="font-size: 14px">
+                                        <span>
+                                            <b>Cupo:</b><input type="text" id="id-cliente-cupo" value="0.00"
+                                                               class="text-right"
+                                                               style="width: 18%;border: solid 1px #ccc;padding-top: 3px;padding-bottom: 3px;font-weight: bold;border-radius: 2px"
+                                                               readonly="">
+                                        </span>
+                                        <span>
+                                            <b>Sald:</b><input type="text" id="id-cliente-saldo"
+                                                               value="0.00"
+                                                               class="text-right"
+                                                               style="width: 18%;border: solid 1px #ccc;padding-top: 3px;padding-bottom: 3px;font-weight: bold;border-radius: 2px"
+                                                               readonly="">
+                                        </span>
+                                        <span>
+                                            <b>Disp:</b><input type="text" id="id-cliente-disponible"
+                                                               value="0.00"
+                                                               class="text-right"
+                                                               style="width: 18%;border: solid 1px #ccc;padding-top: 3px;padding-bottom: 3px;font-weight: bold;border-radius: 2px"
+                                                               readonly="">
+                                        </span>
+                                    </div>
+                                </div>
+                                <form id="id-form-producto-codigo-barra">
+                                    <div class="form-row ml-1 mr-1">
+                                        <div class="col-md-3 mt-1">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <button type="button" id="id-btn-lector-codigo-barra"
+                                                            class="btn btn-warning" data-toggle="tooltip"
+                                                            data-placement="top" title="Lector de barra">
+                                                        <i class="fa fa-barcode"></i>
+                                                    </button>
+                                                </div>
+                                                <input type="text" id="id-input-codigo-barra" name="codigo"
+                                                       class="form-control" placeholder="Código de barra"
+                                                       autocomplete="off" required>
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-success" data-toggle="tooltip"
+                                                            data-placement="top" title="Agregar producto">
+                                                        <i class="fa fa-plus-circle"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md mt-1">
+                                            <div class="input-group input-group-sm">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                        <i class="fa fa-cubes"></i>
+                                                    </span>
+                                                </div>
+                                                <input type="text" rel="seleccion" id="id-filter-producto"
+                                                       class="form-control"
+                                                       placeholder="Buscar producto por descripción">
+                                                <div class="input-group-append">
+                                                    <button type="button" id="id-btn-show-modal-buscar"
+                                                            class="btn btn-primary">
+                                                        <i class="fa fa-search"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                                <div id="id-contenedor-detalle-venta" class="row">
+                                    <div class="col-md-12 mt-1">
+                                        <table id="id-table-detalle-factura"
+                                               class="table table-bordered table-hover table-striped table-sm p-0"
+                                               style="border: solid 1px #ccc">
+                                            <thead class="text-center text-sm-center bg-gradient-light"
+                                                   style="font-size: 13px;color: #1c294e">
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th>Emp</th>
+                                                <th>Cant</th>
+                                                <th>PVP</th>
+                                                <th>Total</th>
+                                                <th class="p-0" align="center" width="10">..
+                                                    <!--button type="button" onclick="venta.eliminar_lista();"
+                                                            class="btn btn-danger btn-sm p-1 m-0"
+                                                            title="Eliminar detalle">
+                                                        <i class="fa fa-minus-circle"></i>
+                                                    </button-->
+                                                </th>
+                                            </tr>
+                                            </thead>
+                                            <tbody style="font-size: 12px;color: #000">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md">
+                                        <table class="table table-striped table-sm sm-0 m-0 p-0 table-light"
+                                               id="tab_logic_total">
+                                            <tbody>
+                                            <tr style="font-size: 12px;" class="bg-gradient-primary text-white">
+                                                <td colspan="2">
+                                                    <b class="text-white">Items:</b>
+                                                    <span id="id-items-lista" class="badge badge-secondary"
+                                                          style="font-size: 12px">0</span>
+                                                </td>
+                                                <th>
+                                                    <div class="text-right" style="display: none">
+                                                        BT.cero:<input type="text" value="0.00" id="id-base-tarifa-cero"
+                                                                       class="bg-white text-right"
+                                                                       style="width: 24%;border: 0px;font-weight: bold"
+                                                                       readonly>
+                                                        BT.Iva:<input type="text" value="0.00" id="id-base-tarifa-iva"
+                                                                      class="bg-white text-right"
+                                                                      style="width: 24%;border: 0px;font-weight: bold"
+                                                                      readonly>
+                                                    </div>
+                                                </th>
+                                            </tr>
+                                            <tr>
+                                                <th rowspan="3" width="36%">
+                                                    <div class="text-center"
+                                                         style="font-family:'Arial Black';height: 5rem;background: #000">
+                                                        <span id="id-mensaje-producto"
+                                                              style="font-size: 10px;color: #01ff70;font-family:sans-serif;font-weight: bolder"></span>
+
+                                                        <span style="font-size: 12px;color: #01ff70;font-family:sans-serif;font-weight: bolder"
+                                                              id="id-mensaje-display">
+                                                        </span>
+                                                    </div>
+                                                </th>
+                                                <th class="text-right align-middle" width="24%">Subtotal</th>
+                                                <td class="p-0">
+                                                    <div class="input-group input-group-sm">
+                                                        <div class="input-group-prepend">
+                                                            <div class="input-group-text">
+                                                                <i class="fa fa-dollar-sign"></i>
+                                                            </div>
+                                                        </div>
+                                                        <input type="text"
+                                                               style="color: #00e765;font-weight: bolder;font-size: 12px;background: #000"
+                                                               placeholder='0.00'
+                                                               class="form-control text-right input-lg m-0"
+                                                               id="id-subtotal" readonly/>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="text-right align-middle">Impuesto</th>
+                                                <td class="p-0">
+                                                    <div class="input-group input-group-sm">
+                                                        <div class="input-group-prepend">
+                                                            <div class="input-group-text">
+                                                                <i class="fa fa-dollar-sign"></i>
+                                                            </div>
+                                                        </div>
+                                                        <input type="text"
+                                                               style="color: #00e765;font-weight: bolder;font-size: 12px;background: #000"
+                                                               class="form-control form-control text-right input-lg m-0"
+                                                               id="id-impuesto-total"
+                                                               placeholder="0.00" readonly>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="text-right align-middle">Descuento</th>
+                                                <td class="p-0">
+                                                    <div class="input-group input-group-sm">
+                                                        <div class="input-group-prepend">
+                                                            <div class="input-group-text">
+                                                                <i class="fa fa-dollar-sign"></i>
+                                                            </div>
+                                                        </div>
+                                                        <input type="text"
+                                                               style="color: #00e765;font-weight: bolder;font-size: 12px;background: #000"
+                                                               class="form-control form-control text-right input-lg m-0"
+                                                               id="id-descuento-total"
+                                                               placeholder="0.00" readonly>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td></td>
+                                                <th class="text-right align-middle">Total a Pagar</th>
+                                                <td class="p-0">
+                                                    <div class="input-group input-group-sm">
+                                                        <div class="input-group-prepend">
+                                                            <div class="input-group-text">
+                                                                <i class="fa fa-dollar-sign"></i>
+                                                            </div>
+                                                        </div>
+                                                        <input type="text" name='total_amount'
+                                                               style="color: #00e765;font-weight: bolder;font-size: 14px;background: #000"
+                                                               id="id-total-pagar" placeholder='0.00'
+                                                               class="form-control form-control text-right input-lg m-0"
+                                                               readonly/>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="card-footer text-right d-none d-sm-block">
+                        <button type="button" rel="btn-salir-pos-factura" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"></i> Salir del punto de venta
+                        </button>
+                        <!--a href="javascript: if(confirm('Desea cancelar la factura')){ window.location.reload();}"
+                           class="btn btn-danger">
+                            <i class="fa fa-ban"></i> Cancelar
+                        </a-->
+                        <!--button class="btn btn-success" id="id-btn-guardar-factura" disabled>
+                            <i class="fa fa-save"></i> Guardar Documento
+                        </button-->
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+    <div class="modal fade" id="id-modal-buscar-productos" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header table-secondary">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="id-input-buscar-producto"
+                               aria-label="Text input with segmented dropdown button" placeholder="Buscar producto.."
+                               autocomplete="off">
+                        <div class="input-group-append">
+                        <span class="input-group-text" id="basic-addon1">
+                            <i class="fa fa-search"></i>
+                        </span>
+                        </div>
+                    </div>
+                    <button type="button" class="close" aria-label="Close" data-dismiss="modal" onfocus="">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body table-responsive p-0">
+                    <table id="id-table-buscar-filtro"
+                           class="table table-hover table-striped table-sm tb-head-fixed m-0">
+                        <thead class="text-center text-sm-center thead-light small">
+                        <tr>
+                            <!--th width="106">Cod.</th-->
+                            <th width="32">..</th>
+                            <th width="30">Emp.</th>
+                            <th width="200">Nombre</th>
+                            <th width="35">Formato</th>
+                            <th width="50">P.Unt.</th>
+                            <th width="50">P.Caja</th>
+                        </tr>
+                        </thead>
+                        <tbody style="font-size: 14px">
+                        </tbody>
+                    </table>
+
+                </div>
+                <div class="modal-footer bg-gradient-secondary">
+                    <div class="form-row">
+                        <table class="table table-bordered table-sm sm m-0">
+                            <thead class="text-center text-sm-center thead-light small">
+                            <th>Stock</th>
+                            <th>Und.</th>
+                            <th>Cja.</th>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td width="100">
+                                    <input type="text" id="id-tm-stock"
+                                           class="form-control form-control-sm text-right" readonly
+                                           style="font-size: 16px;font-weight: bold;color:#00e765;background: #000"
+                                           value="0.00">
+                                </td>
+                                <td width="100">
+                                    <input type="text" id="id-tm-unidad"
+                                           class="form-control form-control-sm text-right" readonly
+                                           style="font-size: 16px;font-weight: bold;color: #00e765;background: #000"
+                                           value="0.00">
+                                </td>
+                                <td width="100">
+                                    <input type="text" id="id-tm-caja"
+                                           class="form-control form-control-sm text-right" readonly
+                                           style="font-size: 16px;font-weight: bold;color: #00e765;background: #000"
+                                           value="0.00">
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <i class="fa fa-arrow-left"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade bd-example-modal-lg" id="id-modal-guadar-documento" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="id-form-modal-factura">
+                    <input type="hidden" id="id-accion-imprimir" value="1">
+                    <div class="modal-header bg-gradient-light p-2">
+                        <h4 class="modal-title" id="exampleModalLongTitle">Cobrar documento.</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-row">
+                            <div class="col-md-3">
+                                <div class="input-group input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-dollar-sign"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" step='0.01' id="id-valor-cambio" name="cambio" value=""
+                                           maxlength="6"
+                                           placeholder="Efectivo"
+                                           class="form-control" onkeypress="return numerico(event);">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group input-group">
+                                    <select class="custom-select" id="id-select-tipo-factura">
+                                        <option value="FA">FACTURA</option>
+                                        <option value="NV">NOTA/VENTA</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <div class="input-group-text">
+                                            <b>Cambio</b>
+                                        </div>
+                                    </div>
+                                    <input type="text" style="color: #00e765;font-weight: bolder"
+                                           placeholder='0.00'
+                                           class="form-control text-right input-lg bg-dark m-0 p-0"
+                                           id="id-cambio-display" readonly/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row sw-cheque" style="display: none">
+                            <div class="col-md-3 mt-2">
+                                <select class="custom-select mr-sm-2" id="id-select-tarjeta-banco">
+                                    <option selected="">--------</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mt-2">
+                                <div class="input-group">
+                                    <input type="date" id="id-cheque-fecha" value="{{ hoy|date:"d-m-Y" }}"
+                                           class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md mt-2">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-credit-card"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="id-cheque-numero-cuenta" value=""
+                                           class="form-control" placeholder="No. Cuenta">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row sw-cheque" style="display: none">
+                            <div class="col-md-3 mt-1">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-file"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="id-cheque-numero" value=""
+                                           class="form-control" placeholder="No. Cheque">
+                                </div>
+                            </div>
+                            <div class="col-md-3 mt-1">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-dollar-sign"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="id-cheque-valor" value=""
+                                           class="form-control" placeholder="Valor">
+                                </div>
+                            </div>
+                            <div class="col-md mt-1">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            Girador
+                                        </span>
+                                    </div>
+                                    <input type="text" id="id-cheque-girador" value=""
+                                           class="form-control" placeholder="">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="col-md text-left d-none">
+                            <button id="id-btn-modal-guardar-cotizacion" class="btn btn-sm btn-warning">
+                                <i class="fa fa-file-invoice"></i> Cotización
+                            </button>
+                        </div>
+                        <div class="col-md text-right">
+                            <button id="id-btn-modal-guardar-pos-fa" rel="btn-accion-guardar" value="1"
+                                    class="btn btn-primary">
+                                <i class="fa fa-print"></i> Imprimir
+                            </button>
+                            <button id="id-btn-modal-guardar-pos-nv" rel="btn-accion-guardar" value="0"
+                                    class="btn btn-success" disabled>
+                                <i class="fa fa-save"></i> Guardar
+                            </button>
+                            <button type="button" class="btn btn-danger" data-dismiss="modal">
+                                <i class="fa fa-window-close"></i> Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="id-modal-forma-pago" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="card gedf-card m-0">
+                    <div class="card-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="images-tab" data-toggle="tab" role="tab"
+                                   aria-controls="images"
+                                   aria-selected="false" href="#images">TARJETA</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content" id="myTabContent">
+                            <div class="tab-pane fade show active" id="posts" role="tabpanel"
+                                 aria-labelledby="posts-tab">
+                                <div class="text-center">
+                                    <div class="btn-group btn-block" role="group" aria-label="Basic example">
+                                        <button type="button" class="btn btn-warning">
+                                            <i class="fa fa-credit-card"></i> <b>Tarjeta Debito</b>
+                                        </button>
+                                        <button type="button" class="btn btn-primary">
+                                            <i class="fa fa-credit-card"></i> <b>Tarjeta Credito</b>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="form-row mt-1">
+                                    <div class="col-md">
+                                        <div class="input-group mt-1">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">
+                                                    Diferido
+                                                </span>
+                                            </div>
+                                            <select class="custom-select" id="id-select-vendedor">
+                                                <option value="">---------------</option>
+                                                <option value="">CORRIENTE</option>
+                                                <option value="">3 MESES</option>
+                                                <option value="">6 MESES</option>
+                                                <option value="">9 MESES</option>
+                                                <option value="">12 MESES</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col-md text-center mt-2">
+                                        <label class="custom-control custom-checkbox">
+                                            Con Interes
+                                            <input type="checkbox" class="custom-control-input" rel="accion">
+                                            <span class="custom-control-indicator"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">
+                        <i class="fa fa-window-close"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="id-modal-apertura-caja" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="id-form-modal-aperturar-caja">
+                    <div class="modal-header table-success p-2">
+                        <h5 class="modal-title" id="exampleModalLongTitle">Apertura de caja</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="col-md">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <i class="fa fa-dollar-sign"></i>
+                                    </div>
+                                </div>
+                                <input type="number" style="color: #00e765;font-weight: bolder" placeholder="0.00"
+                                       class="form-control text-right input-lg bg-dark m-0 p-0"
+                                       id="id-valor-apertura-caja" min="0.01" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-danger" data-dismiss="modal">
+                            <i class="fa fa-window-close"></i> Cancelar
+                        </button>
+                        <button class="btn btn-sm btn-primary">
+                            <i class="fa fa-money"></i> Aperturar caja
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="id-modal-registrar-cliente" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <form id="id-form-guardar-cliente">
+                    <div class="card gedf-card m-0">
+                        <div class="card-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="id-tab-cliente-datos" data-toggle="tab"
+                                       href="#id-tab-cont-cliente-datos" role="tab"
+                                       aria-controls="id-tab-cont-cliente-datos" aria-selected="true">
+                                        Datos personales</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="id-tab-cliente-contacto" data-toggle="tab" role="tab"
+                                       aria-controls="id-tab-cont-cliente-contacto"
+                                       aria-selected="false" href="#id-tab-cont-cliente-contacto">Contacto</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <div class="tab-content" id="myTabContent">
+                                <div class="tab-pane fade show active" id="id-tab-cont-cliente-datos" role="tabpanel"
+                                     aria-labelledby="datos-tab">
+
+                                    <div class="form-group row">
+                                        <label for="ruc"
+                                               class="col-md-2 col-form-label col-form-label-sm">Ruc</label>
+                                        <div class="col-sm-10">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                        <i class="fa fa-address-card"></i>
+                                                    </span>
+                                                </div>
+                                                <input type="text" name="ruc" class="form-control"
+                                                       placeholder="9999999999" maxlength="13" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="nombres"
+                                               class="col-md-2 col-form-label col-form-label-sm">Nombres</label>
+                                        <div class="col-sm-10">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                        <i class="fa fa-user"></i>
+                                                    </span>
+                                                </div>
+                                                <input type="text" name="nombres" class="form-control"
+                                                       placeholder="Apellidos y nombres" maxlength="60" required>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="tab-pane fade" id="id-tab-cont-cliente-contacto" role="tabpanel"
+                                     aria-labelledby="contacto-tab">
+                                    <div class="form-group row">
+                                        <label for="telefono"
+                                               class="col-md-2 col-form-label col-form-label-sm">Telefono</label>
+                                        <div class="col-sm-10">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                        <i class="fa fa-phone"></i>
+                                                    </span>
+                                                </div>
+                                                <input type="text" name="telefono" class="form-control"
+                                                       placeholder="0999999999" maxlength="20">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="email"
+                                               class="col-md-2 col-form-label col-form-label-sm">E-mail</label>
+                                        <div class="col-sm-10">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                        <i class="fa fa-envelope"></i>
+                                                    </span>
+                                                </div>
+                                                <input type="text" name="email" class="form-control" placeholder=""
+                                                       maxlength="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="direccion"
+                                               class="col-md-2 col-form-label col-form-label-sm">Dirección</label>
+                                        <div class="col-sm-10">
+                                            <textarea class="form-control" rows="2" maxlength="100"
+                                                      id="id-cliente-direccion"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">
+                            <i class="fa fa-window-close"></i> Cancelar
+                        </button>
+                        <button class="btn btn-success" id="id-btn-guadar-cliente">
+                            <i class="fa fa-save"></i> Guardar cliente
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="id-modal-dialogo-alert" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header table-secondary">
+                    <h6 class="modal-title">
+                        <i class="fa fa-laptop"></i> Mensaje de confirmación
+                    </h6>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h5>
+                        <b><span class="text-danger" id="id-mensaje-alert"></span></b>
+                    </h5>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="id-btn-dialog-cerrar" class="btn btn-primary" data-dismiss="modal"
+                            onfocus="">Aceptar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="id-modal-accion-autorizacion" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <form id="id-form-accion-autorizacion" action="">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header table-secondary">
+                        <h6 class="modal-title">
+                            <i class="fa fa-laptop"></i> Confirmar Autorización
+                        </h6>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="id-accion-acceso" value="">
+                        <input type="hidden" id="id-codigo" value="">
+                        <input type="hidden" id="id-productoid" value="">
+                        <input type="hidden" id="id-valor-acceso" value="">
+
+                        <div class="col-md">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-lock"></i>
+                                    </span>
+                                </div>
+                                <input type="password" class="form-control" id="id-codigo-acceso" name="codigo_acceso"
+                                       placeholder="Ingrese codigo" autocomplete="off" required>
+                                <div class="input-group-append">
+                                    <span class="input-group-text">
+                                        <b id="id-accion-procesando" class="done">Autorización</b>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                                onfocus="">
+                            <i class="fa fa-ban"></i> Cancelar
+                        </button>
+                        <button class="btn btn-success" id="id-btn-accion-confirmar">
+                            <i class="fa fa-sign-in-alt"></i> Confirmar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal fade" id="id-modal-consultar-precios" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header table-secondary">
+                    <h5 class="modal-title"><i class="fa fa-cubes"></i><b id="id-producto-descripcion"></b></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <fieldset class="tab-content m-0">
+                        <div class="tab-pane fade show active" role="tabpanel">
+                            <div class="form-row">
+                                <div class="col-md-7 col-6">
+                                    <div class="form-row">
+                                        <div class="col-md-10 col-9 mt-2 d-none d-sm-block d-sm-none d-md-block">
+                                            <form id="id-form-consultar-precio">
+                                                <div class="input-group" id="id-consultar-barra">
+                                                    <div class="input-group-append">
+                                                    <span class="input-group-text">
+                                                        <i class="fa fa-barcode"></i>
+                                                    </span>
+                                                    </div>
+                                                    <input type="text" class="form-control"
+                                                           id="id-input-consultar-precio"
+                                                           aria-label="Text input with segmented dropdown button"
+                                                           placeholder="Buscar producto por código"
+                                                           autocomplete="off">
+                                                    <div class="input-group-append">
+                                                        <button class="btn btn-success" data-toggle="tooltip"
+                                                                data-placement="top" title=""
+                                                                data-original-title="Agregar producto">
+                                                            <i class="fa fa-plus-circle"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="input-group" style="display: none" id="id-consultar-nombre">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            <i class="fa fa-cubes"></i>
+                                                        </span>
+                                                    </div>
+                                                    <input type="text" rel="seleccion" id="id-consulta-producto-nombre"
+                                                           class="form-control"
+                                                           placeholder="Buscar producto por descripción">
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="col-md-2 col-2 mt-2 d-none d-sm-block d-sm-none d-md-block p-0">
+                                            <div class="form-check">
+                                                <input class="form-check-input" name="tipo-consulta" type="checkbox"
+                                                       id="id-tipo-consulta"><b>Desc</b>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-12 col-12 mt-2 d-none d-sm-block d-sm-none d-md-block p-0">
+                                        <table class="table table-striped table-sm sm-0">
+                                            <thead class="bg-primary text-white  small">
+                                            <tr>
+                                                <th class="d-none d-sm-table-cell">Precio por Empaque</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="det" class="table-sm bg-dark" style="font-size: 12px">
+                                            <tr>
+                                                <td class="text-center h1"
+                                                    style="color: #01ff70;font-family:sans-serif;font-weight: bolder">$
+                                                    <span class="h1" id="id-precio-producto">
+                                                            0.00
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                        <div class="form-row">
+                                            <div class="col-md-12 col-12 mt-1 d-none d-sm-block d-sm-none d-md-block">
+                                                <table id="id-precios-empaques"
+                                                       class="table table-striped table-sm sm-0">
+                                                    <thead class="text-center text-sm-center thead-light small">
+                                                    <tr>
+                                                        <th class="d-none d-sm-table-cell">Empaque</th>
+                                                        <th>Inicio</th>
+                                                        <th>Fin</th>
+                                                        <th class="d-none d-sm-table-cell">Unitario</th>
+                                                        <th class="d-none d-sm-table-cell">Precio</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody id="id-producto-empaques" class="table-sm small"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-5 col-6">
+                                    <fieldset class="tab-content m-0">
+                                        <form>
+                                            <div class="form-row">
+                                                <div class="col-md-12 mt-1">
+                                                    <div class="input-group">
+                                                        <label for="codigo_barra" class="col-sm-5 col-form-label pl-0">
+                                                            <b>Código de Barra:</b></label>
+                                                        <div class="col-sm-7">
+                                                            <input type="text" class="form-control bg-white"
+                                                                   id="id-codigo-barra" readonly>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="col-md-12 mt-1">
+                                                    <div class="input-group">
+                                                        <label for="codigo_producto"
+                                                               class="col-sm-5 col-form-label text-left pl-0"><b>Código:</b></label>
+                                                        <div class="col-sm-7">
+                                                            <input type="text" class="form-control bg-white"
+                                                                   id="id-codigo-producto" readonly>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="col-md-12 m-0">
+                                                    <div class="form-group">
+                                                        <label class="col-form-label"
+                                                               for="nombre_producto"><b>Nombre:</b></label>
+                                                        <input type="text" id="id-nombre" class="form-control bg-white"
+                                                               readonly>
+                                                        <label class="col-form-label" for="descripcion_producto"><b>Descripción:</b></label>
+                                                        <input type="text" id="id-descripcion"
+                                                               class="form-control bg-white" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </fieldset>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset disabled>
+                        <div class="form-row mt-1">
+                            <div class="col-md-12 col-4 mt-1 d-none d-sm-block d-sm-none d-md-block">
+                                <table id="id-existencias-producto" class="table table-striped table-sm sm-0">
+                                    <thead class="text-center text-sm-center thead-light small">
+                                    <tr role="row">
+                                        <th colspan="18" class="text-left"><h5><b>Stock</b></h5></th>
+                                    </tr>
+                                    <tr>
+                                        <th class="d-none d-sm-table-cell">Código</th>
+                                        <th>Nombre</th>
+                                        <th class="d-none d-sm-table-cell">Bodega</th>
+                                        <th class="d-none d-sm-table-cell">Unidades</th>
+                                        <th class="d-none d-sm-table-cell">Disponible</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="id-sotck-producto" class="table-sm small"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="form-row mt-1">
+                        <label for="stock-sistema" class="col-sm-10 col-form-label text-right"><b>Stock del Sistema:</b></label>
+                        <div class="col-sm-2">
+                            <input type="text" class="form-control text-right bg-white"
+                                   style="font-size: 20px;font-weight: bold" id="id-stock-sistema" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="id-btn-dialog-cerrar" class="btn btn-danger" data-dismiss="modal"
+                            onfocus="">Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="id-modal-lector-codigo-barra" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">
+                        <i class="fa fa-laptop"></i> Lector de barra
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-0 m-0">
+                    <div id="id-contenedor-camara" class="p-0" style="width: 100%"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block footer %}
+    <footer class="navbar navbar-expand-lg navbar-dark fixed-bottom bg-dark d-block d-sm-none p-2">
+        <div class="container" id="id-foot-menu">
+            <div class="col-md-7 col-7 text-white">
+                Total: <b id="id-total-pagar-foot" style="color: #00e765;font-size:x-large">0.00</b>
+            </div>
+            <div class="col-md-5 col-5 text-center">
+                <button onclick="$('#id-btn-guardar-factura').click();" data-toggle="tooltip"
+                        data-placement="top"
+                        title="Guardar orden de pedido" class="btn btn-success btn-block btn-sm">
+                    <span class="fa fa-save"></span> <b>Guardar</b>
+                </button>
+            </div>
+        </div>
+    </footer>
+{% endblock %}
+
+{% block js %}
+    <script id="js-template-detalle-filtro-buscar" type="text/x-jsrender">
+[%for productos%]
+   <tr data-json='{"productoid":"[%:productoid%]","codigo":"[%:codigo%]","pund":"[%:precio_und%]","pcja":"[%:precio_cja%]","costo":"[%:costo_compra%]","pcjafactor":"[%:precio_cja_factor%]","stock":"[%:stock%]"}'>
+    <!--td width="120"><a href="#" class="btn-block"><b>[%:codigo%]</b></a></td-->
+    <td width="32" align="center" class="align-middle">
+      <button type="button" data-json='{"productoid":"[%:productoid%]","codigo":"[%:codigo%]"}' class="btn btn-success btn-sm m-0 seleccionar" tabindex="0" data-toggle="tooltip" title="Seleccionar" >
+          <i class="fa fa-check-circle"></i>
+        </button>
+    </td>
+    <td width="30" class="align-middle">[%:empaque%]</td>
+    <td width="200" style="max-width: calc(200 * 1vw )" class="text-truncate align-middle" title="[%:nombre%]">[%:nombre%]</td>
+    <td width="35" align="center" style="max-width: calc(35 * 1vw )" class="text-truncate align-middle" title="[%:formato%]">[%:formato%]</td>
+    <td width="50" align="right">[%:precio_und%]</td>
+    <td width="50" align="right">[%:precio_cja%]</td>
+    </tr>
+[%/for%]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </script>
+    <script id="js-template-detalle-factura" type="text/x-jsrender">
+[%for items%]
+ <tr>
+    <td width="35%" style="max-width: calc( 35 * 1vw )" class="text-truncate align-middle pl-1">
+        <span class="text" tabindex="0" data-toggle="tooltip" title="[%:nombre%]"><b>[%:nombre%]</b></span>
+        <br>[%:formato%]
+    </td>
+    <td width="20" align="center" class="align-middle p-0">
+       <b>[%:empaque%]</b>
+    </td>
+    <td width="80" align="center" class="align-middle p-0">
+     <div class="input-group input-group-sm m-0">
+            <div class="input-group-prepend">
+                <button class="btn btn-danger p-1 vmax" data-operador="-" id="minus-btn" tabindex="0" data-toggle="tooltip" title="Disminuir">
+                  <i class="fa fa-minus"></i>
+                </button>
+            </div>
+            <input type="text" placeholder="Cantidad" onkeypress="return numerico(event);" data-json='{"codigo":"[%:codigo%]","productoid":"[%:productoid%]","factor":"[%:factor%]","balanza":[%if balanza%]1[%else%]0[%/if%]}' class="form-control text-center input-number cantidad pl-1 pr-1" value="[%:cantidad%]" data-old="[%:cantidad%]" min="1" max="200" step="1" maxlength="6" style="color: #000;font-weight: bold"/>
+            <div class="input-group-append">
+                <button class="btn btn-primary p-1 vmin" data-operador="+" id="plus-btn" tabindex="0" data-toggle="tooltip" title="Incrementar">
+                  <i class="fa fa-plus"></i>
+                </button>
+            </div>
+        </div>
+    </td>
+    <td width="40" align="right" class="align-middle p-0">
+        <b>[%:precio_display.toFixed(4)%] </b>
+    </td>
+    <td width="40" align="right" class="align-middle p-0">
+        <b>[%:total.toFixed(2)%] </b>
+    </td>
+    <td width="10" align="center" class="align-middle p-0">
+        <button onclick="{% if user_parametro.pos_eliminar_item %}venta.eliminar{% else %}
+        venta.modal_eliminar{% endif %}('[%:codigo%]','[%:productoid%]');" class="btn btn-danger btn-sm m-0 p-1" tabindex="0" data-toggle="tooltip" title="Eliminar Item" >
+          <i class="fa fa-minus-circle"></i>
+        </button>
+    </td>
+ </tr>
+[%/for%]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </script>
+
+    <script id="js-template-producto-empaques" type="text/x-jsrender">
+        [%for empaques %]
+           <tr>
+            <td width="50" align="center" class="align-middle"><b>[%:empaque%]</b></td>
+            <td width="50" align="right"class="align-middle"><b>[%:rango%]</b></td>
+            <td width="50" align="right"class="align-middle"><b>[%:rango2%]</b></td>
+            <td width="50" align="right"><b>[%:precio_und%]</b></td>
+            <td width="50" align="right" class="table-warning"style="font-size:18px;color:#555"><b>[%:precio_pvp%]</b></td>
+        [%/for%]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </script>
+    <script id="js-template-existencia-productos" type="text/x-jsrender">
+        [%for existencias %]
+           <tr>
+            <td  class="align-middle"><b>[%:cod_bodega%]</b></td>
+            <td  class="align-middle"><b>[%:nombre%]</b></td>
+            <td  align="right" class="table-warning" style="color:#555"  ><b>[%:cajas%]</b></td>
+            <td  align="right" class="table-success" style="color:#555"><b>[%:unidades%]</b></td>
+            <td  align="right" style="font-size:15px"><b>[%:unidades%]</b></td>
+           </tr>
+        [%/for%]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </script>
+    <scrip src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></scrip>
+    <!--script src="/static/lib/quagga.min.js"></script-->
+    <script src="/static/lib/jquery.easy-autocomplete.min.js"></script>
+    <script src="/static/lib/jsrender.min.js"></script>
+    <script src="/static/lib/jquery.slimscroll.min.js"></script>
+    <script src="/static/js/no-backnavegador.js"></script>
+    <script src="/static/lib/shortcut.js"></script>
+    <script src="/static/js/form_dinamico.js"></script>
+    <script src="/static/js/validador.js"></script>
+
+{% endblock %}
+
+{% block jscript %}
+    <script>
+    var _scannerIsRunning = false;
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+            $.views.settings.delimiters("[%", "%]");
+            $('[data-toggle-date="datepicker"]').datepicker({
+                format: 'dd/mm/yyyy',
+                autoHide: true,
+                language: 'es-ES',
+                zIndex: 2048,
+                endDate: {{ hoy|date:"d/m/Y" }}
+            });
+
+            shortcut.add("f1", function () {
+                let e = $('#btnAdd');
+                if (!e.prop('disabled')) {
+                    e.click();
+                }
+            });
+
+            shortcut.add("f2", function () {
+                let e = $('#id-btn-guardar-factura');
+                if (!e.prop('disabled')) {
+                    e.click();
+                }
+            });
+
+            shortcut.add("f3", function () {
+                let e = $('#id-btn-show-modal-consultar-precio');
+                if (!e.prop('disabled')) {
+                    e.click();
+                }
+            });
+
+            shortcut.add("esc", function () {
+                $('#id-btn-cancelar-documento').click();
+            });
+
+            $('#id-btn-registrar-cliente').on('click', function (e) {
+                e.preventDefault();
+                $('#id-cliente-direccion').val(venta.factura.sucursal);
+                $('#id-modal-registrar-cliente').modal('show');
+            });
+
+            $('#id-form-guardar-cliente').on({
+                submit: function (e) {
+                    e.preventDefault();
+
+                    $('#id-btn-guadar-cliente').prop('disabled', true);
+                    var frmData = new FormData($(this)[0]);
+                    frmData.append('accion', 'guardar');
+                    frmData.append('sucursalid', venta.factura.sucursalid);
+                    frmData.append('divisionid', venta.factura.divisionid);
+                    frmData.append('clase', '01');
+                    frmData.append('terminoid', cliente_final.terminoid);
+                    frmData.append('zonaid', cliente_final.zona_id);
+                    frmData.append('formapago', 'EFECTIVO');
+                    frmData.append('grupo_id', '0000000001');
+                    frmData.append('ciudad', venta.factura.sucursal);
+
+                    $.ajax({
+                        url: '/cliente/clientes/crear/pos/',
+                        data: frmData,
+                        method: 'POST',
+                        dataType: 'json',
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    }).done(function (data) {
+                        if (data.resp) {
+                            fnToast('Cliente guardado correctamente.. ');
+                            $('#id-modal-registrar-cliente').modal('hide');
+                            $('#id-form-guardar-cliente').find('input,textarea').val('');
+
+                            $('#id-cliente-ruc').val(data.cliente.ruc);
+                            $('#id-form-cliente').submit();
+                        } else {
+                            fnToast(data.error, 3);
+                        }
+                        $('#id-btn-guadar-cliente').prop('disabled', false);
+                    }).fail(function (jqXHR, textStatus) {
+                        $('#id-btn-guadar-cliente').prop('disabled', false);
+                        fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                    }).always(function () {
+                        console.log("complete");
+                    });
+                }
+            });
+
+            var options = {
+                url: function (criterio) {
+                    return "/cliente/clientes/consultar?accion=cliente_buscar&criterio=" + criterio;
+                },
+                listLocation: "items",
+                getValue: "nombre",
+                list: {
+                    onClickEvent: function () {
+                        $('#id-select-form-pago').prop('selectedIndex', 0);
+                        let cliente = $('#id-cli-nombre').getSelectedItemData();
+                        $('#id-cliente-ruc').val(cliente.ruc);
+                        $('#id-form-cliente').submit();
+
+                    },
+                    onKeyEnterEvent: function () {
+                        let cliente = $('#id-cli-nombre').getSelectedItemData();
+                        $('#id-cliente-ruc').val(cliente.ruc);
+                        $('#id-form-cliente').submit();
+                    }
+                },
+                ajaxSettings: {
+                    dataType: "json",
+                    beforeSend: function () {
+                    }
+                }
+            };
+
+            $("#id-cli-nombre").easyAutocomplete(options);
+
+            options = {
+                url: function (criterio) {
+                    return "/inventario/ajax/punto-venta/consultar/?accion=p-buscar-autocomplete&almacen=1&criterio=" + criterio;
+                },
+                listLocation: "items",
+                getValue: "nombre",
+                list: {
+                    onClickEvent: function () {
+                        let p = $('#id-filter-producto').getSelectedItemData();
+                        if (p.codigo != '') {
+                            $('#id-input-codigo-barra').val(p.codigo);
+                            $('#id-input-codigo-barra').focus();
+                            $('#id-form-producto-codigo-barra').submit();
+                        }
+                    },
+                    onKeyEnterEvent: function () {
+                        let p = $('#id-filter-producto').getSelectedItemData();
+                        if (p.codigo != '') {
+                            $('#id-input-codigo-barra').val(p.codigo);
+                            $('#id-input-codigo-barra').focus();
+                            $('#id-form-producto-codigo-barra').submit();
+                        }
+                    }
+                },
+                ajaxSettings: {
+                    dataType: "json",
+                    beforeSend: function () {
+                    }
+                },
+            };
+
+            $("#id-filter-producto").easyAutocomplete(options);
+
+            $("div.easy-autocomplete").removeAttr('style');
+
+            $('#id-contenedor-detalle-venta').slimscroll({
+                height: '38vh',
+            });
+            $('#id-table-buscar-filtro tbody').slimscroll({
+                height: '300px',
+            });
+
+            $('#id-btn-cancelar-documento').on('click', function (e) {
+                e.preventDefault();
+                if (venta.factura.items.length > 0) {
+                    if (!venta.user_accion.cancelar) {
+                        $('#id-form-accion-autorizacion').find('#id-codigo').val('');
+                        $('#id-form-accion-autorizacion').find('#id-productoid').val('');
+                        $('#id-form-accion-autorizacion').find('#id-codigo-acceso').val('');
+                        $('#id-form-accion-autorizacion').find('#id-accion-acceso').val('POS-CANCELAR');
+                        $('#id-modal-accion-autorizacion').modal('show');
+                    } else {
+                        if (confirm('Desea cancelar la factura')) {
+                            window.location.reload();
+                        }
+                    }
+                } else {
+                    window.location.reload();
+                }
+            });
+
+            $('button[rel="btn-salir-pos-factura"]').on('click', function (e) {
+                e.preventDefault();
+                if (venta.factura.items.length > 0) {
+                    if (!venta.user_accion.salir) {
+                        $('#id-form-accion-autorizacion').find('#id-codigo').val('');
+                        $('#id-form-accion-autorizacion').find('#id-productoid').val('');
+                        $('#id-form-accion-autorizacion').find('#id-codigo-acceso').val('');
+                        $('#id-form-accion-autorizacion').find('#id-accion-acceso').val('POS-CANCELAR');
+                        $('#id-modal-accion-autorizacion').modal('show');
+                    } else {
+                        if (confirm('Desea salir del punto de venta..')) {
+                            window.location = '/';
+                        }
+                    }
+                } else {
+                    window.location = '/';
+                }
+            });
+
+            $('#btnAdd').on('click', function (e) {
+                e.preventDefault();
+                $("#id-select-form-pago option[value='CRE']").prop('disabled', true);
+
+                var jqxhr = $.getJSON('/pos/ajax/caja-apertura/', {
+                    accion: 'pos-apertura-caja',
+                    fecha: $('#id-fecha').val(),
+                    caja_id: venta.factura.cajaid
+                })
+                    .done(function (data) {
+                        if (data.resp) {
+                            if (data.aperturado) {
+                                $('#myTabContent').prop('disabled', false);
+                                $('#id-btn-guardar-factura').prop('disabled', false);
+                                $('#btnAdd').prop('disabled', true);
+
+                                $('#id-select-form-pago').prop('selectedIndex', 0).trigger('change');
+                                $('#id-select-vendedor').prop('selectedIndex', 0).trigger('change');
+
+                                $('#id-input-codigo-barra').val('').focus();
+                                return;
+                            } else {
+                                $('#id-modal-apertura-caja').modal('show');
+                                $('#id-valor-apertura-caja').focus();
+                            }
+                        } else {
+                            fnToast(data.error, 3);
+                        }
+                        $('#myTabContent').prop('disabled', true);
+                        $('#id-btn-guardar-factura').prop('disabled', true);
+                    })
+                    .fail(function (jqXHR, textStatus) {
+                        fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                        $('#myTabContent').prop('disabled', true);
+                        $('#id-btn-guardar-factura').prop('disabled', true);
+                    })
+                    .always(function () {
+                        console.log("complete");
+                    });
+            });
+
+            $('#id-btn-show-modal-buscar').on('click', function (e) {
+                e.preventDefault();
+                $('#id-modal-buscar-productos').modal('show');
+            });
+
+            $('#id-input-buscar-producto').on('keyup', function (e) {
+                e.preventDefault();
+                $.ajax({
+                    url: '/inventario/ajax/punto-venta/consultar/',
+                    data: {
+                        accion: 'p-buscar-nombre',
+                        criterio: $(this).val(),
+                        bodegaid: venta.factura.bodegaid,
+                        sucursalid: venta.factura.sucursalid,
+                        almacen: '1'
+                    },
+                    beforeSend: function () {
+                    },
+                    method: 'GET',
+                    dataType: 'json',
+                }).done(function (data) {
+                    if (data.resp) {
+                        $.views.settings.allowCode(true);
+                        var tmpl = $.templates("#js-template-detalle-filtro-buscar"); // Get compiled template
+                        var html = tmpl.render(data);      // Render template using data - as HTML string
+                        $("#id-table-buscar-filtro tbody").html(html);
+                    }
+                }).fail(function (jqXHR, textStatus) {
+                    fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                }).always(function () {
+                    console.log("complete");
+                });
+            });
+
+            $('#id-form-cliente').on({
+                submit: (e) => {
+                    e.preventDefault();
+                    let ruc = $('#id-cliente-ruc').val();
+
+                    $('#id-cliente-cupo').val('0.00');
+                    $('#id-cliente-saldo').val('0.00');
+                    $('#id-cliente-disponible').val('0.00');
+
+                    var jqxhr = $.getJSON('/cliente/clientes/consultar', {
+                        accion: 'cliente-ruc',
+                        ruc: ruc
+                    })
+                        .done(function (data) {
+                            if (data.resp) {
+
+                                $('#id-select-form-pago').prop('selectedIndex', 0);
+                                venta.factura.cliente = data.cliente;
+                                venta.factura.clienteid = venta.factura.cliente.id;
+                                venta.factura.cliente.cupo = Number(venta.factura.cliente.cupo);
+                                venta.factura.cliente.saldo = Number(venta.factura.cliente.saldo);
+                                venta.factura.cliente.disponible = Number(venta.factura.cliente.disponible);
+
+                                $('#id-cli-nombre').val(venta.factura.cliente.nombre);
+                                $('#id-lista-precio').val(venta.factura.cliente.lista_precio);
+                                $('#id-select-vendedor').val(venta.factura.cliente.vendedorid);
+                                $('#id-termino-display').html(venta.factura.cliente.termino_display);
+
+                                $('#id-cliente-cupo').val(venta.factura.cliente.cupo);
+                                $('#id-cliente-saldo').val(venta.factura.cliente.saldo);
+                                $('#id-cliente-disponible').val(venta.factura.cliente.disponible);
+
+                                venta.actualizar();
+
+                                let estad = venta.factura.cliente.termino_cod == 'TER-CONTADO' ? true : false;
+                                $("#id-select-form-pago option[value='CRE']").prop('disabled', estad);
+                                estad = venta.factura.cliente.id == '0000000001' ? true : false;
+                                //$("#id-select-form-pago option[value='CHE']").prop('disabled', estad);
+                                //$("#id-select-form-pago option[value='TAR']").prop('disabled', estad);
+                                //$('#id-btn-forma-pago').prop('disabled', estad);
+                                $('#id-select-form-pago').trigger('change');
+                                $('#id-input-codigo-barra').val('').focus();
+
+                                if (venta.factura.items.length > 0) {
+                                    venta.cotizacion_update();
+                                }
+                            } else {
+                                fnToast(data.error, 3);
+                                venta.actualizar();
+                            }
+                        })
+                        .fail(function (jqXHR, textStatus) {
+                            fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                        })
+                        .always(function () {
+                            console.log("complete");
+                        });
+                }
+            });
+
+            $('#id-form-producto-codigo-barra').on({
+                submit: (e) => {
+                    e.preventDefault();
+                    var codigo = $('#id-input-codigo-barra').val();
+                    var cantidad = 1;
+
+                    if (codigo.indexOf('+') !== -1) {
+                        let arreglo = codigo.split('+');
+                        codigo = String(arreglo[1]).trim();
+                        cantidad = String(arreglo[0]).trim();
+
+                        if (cantidad == null || isNaN(cantidad) || cantidad.length <= 0 || Number(cantidad) <= 0) {
+                            fnToast("El valor de la cantidad ingresada no es correcto.", 3);
+                            return;
+                        }
+                    }
+                    $('#id-input-codigo-barra').prop('disabled', true);
+                    var jqxhr = $.getJSON('/inventario/ajax/punto-venta/codigo-barra/', {
+                        accion: 'producto-codigo-barra',
+                        codigo: codigo
+                    }).done(function (data) {
+                        $('#id-input-codigo-barra').prop('disabled', false);
+                        if (data.resp) {
+                            var item = data.producto;
+                            if (item.balanza) {
+                                cantidad = prompt("Ingrese la cantidad", Number(cantidad).toFixed(2));
+                                if (cantidad == null || isNaN(cantidad) || cantidad.length <= 0 || Number(cantidad) <= 0) {
+                                    if (cantidad != null) {
+                                        fnToast("El valor de la cantidad ingresada no es correcto.", 3);
+                                    }
+                                    $('#id-input-codigo-barra').val('').focus();
+                                    return;
+                                }
+                            }
+                            item.cantidad = Number(cantidad);
+                            let cantidad_cotiza = 0;
+                            if (venta.factura.controla_stock == '1') {
+                                cantidad_cotiza = venta.get_cantidad(item.codigo) + item.cantidad;
+                            }
+                            $('#id-mensaje-alert').html('');
+                            $.ajax({
+                                async: false,
+                                url: '/inventario/ajax/punto-venta/consultar/',
+                                data: {
+                                    accion: 'p-buscar-rango',
+                                    productoid: item.productoid,
+                                    codigo: item.codigo,
+                                    factor: item.factor,
+                                    cantidad: item.cantidad,
+                                    cantidad_cotiza: cantidad_cotiza,
+                                    precio_lista: venta.factura.cliente.precio_lista ? 1 : 0,
+                                    precio_activo: venta.factura.cliente.precio_activo,
+                                    balanza: item.balanza ? 1 : 0,
+                                    bodegaid: venta.factura.bodegaid,
+                                    sucursalid: venta.factura.sucursalid,
+                                    controla_stock: venta.factura.controla_stock
+                                },
+                                beforeSend: function () {
+                                },
+                                method: 'GET',
+                                dataType: 'json',
+                            }).done(function (data) {
+                                if (data.resp) {
+
+                                    item.precio = Number(data.producto.precio);
+                                    item.precio_factor = Number(data.producto.precio_factor);
+                                    item.precio_final = Number(data.producto.precio_final);
+                                    item.stock = Number(data.producto.stock);
+
+                                    $('#id-mensaje-producto').html('');
+                                    $('#id-mensaje-display').html('');
+                                    $('#id-mensaje-display').removeClass();
+
+                                    let nitem = venta.add(item);
+                                    venta.actualizar();
+                                    venta.set_scroll_end();
+                                    venta.cotizacion_add(nitem);
+                                    $('#id-input-codigo-barra').val('').focus();
+
+                                } else {
+                                    if (venta.factura.controla_stock == '1' && data.sin_stock == true) {
+                                        $('#id-mensaje-alert').html(data.error);
+                                        $('#id-mensaje-alert').append('<br>No se agrego el producto al detalle..');
+                                        $('#id-modal-dialogo-alert').modal({
+                                            backdrop: 'static'
+                                        });
+                                        setTimeout(function () {
+                                            $("#id-btn-dialog-cerrar").focus();
+                                        }, 150);
+                                    } else {
+                                        fnToast(data.error, 3);
+                                    }
+                                    venta.actualizar();
+                                    venta.set_scroll_end();
+                                }
+                                $('#id-input-codigo-barra').val('').focus();
+
+                            }).fail(function (jqXHR, textStatus) {
+                                fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                                venta.actualizar();
+                                venta.set_scroll_end();
+                                $('#id-input-codigo-barra').prop('disabled', false);
+                                $('#id-input-codigo-barra').val('').focus();
+                            }).always(function () {
+                                console.log("complete");
+                            });
+                        } else {
+                            $('#id-btn-show-modal-buscar').click();
+                            $('#id-input-buscar-producto').val(codigo).trigger('keyup');
+                        }
+                    })
+                        .fail(function (jqXHR, textStatus) {
+                            $('#id-input-codigo-barra').val('').focus();
+                            fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                            $('#id-input-codigo-barra').val('').focus();
+                        })
+                        .always(function () {
+                            console.log("complete");
+                        });
+                }
+            });
+
+            $('#id-form-modal-aperturar-caja').on({
+                submit: (e) => {
+                    e.preventDefault();
+                    let valor = $('#id-valor-apertura-caja').val();
+                    if (valor.length > 0 && valor != '') {
+                        if (Number(valor) <= 0) {
+                            fnToast('Ingreso valor mayor a Cero', 3);
+                            return;
+                        }
+                        $.ajax({
+                            async: false,
+                            url: '/pos/ajax/caja-apertura/',
+                            data: {
+                                accion: 'pos-aperturar-caja',
+                                fecha: $('#id-fecha').val(),
+                                valor: Number($('#id-valor-apertura-caja').val())
+                            },
+                            method: 'POST',
+                            dataType: 'json',
+                        }).done(function (data) {
+                            if (data.resp) {
+                                $('#id-modal-apertura-caja').modal('hide');
+                                $('#myTabContent').prop('disabled', false);
+                                $('#id-btn-guardar-factura').prop('disabled', false);
+                                $('#btnAdd').prop('disabled', true);
+
+                                $('#id-select-form-pago').prop('selectedIndex', 0).trigger('change');
+                                $('#id-select-vendedor').prop('selectedIndex', 0).trigger('change');
+
+                                $('#id-input-codigo-barra').val('').focus();
+                                return;
+                            } else {
+                                fnToast(data.error, 3);
+                            }
+                            $('#myTabContent').prop('disabled', true);
+                            $('#id-btn-guardar-factura').prop('disabled', true);
+                            $('#btnAdd').prop('disabled', false);
+
+                        }).fail(function (jqXHR, textStatus) {
+                            fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                            $('#myTabContent').prop('disabled', true);
+                            $('#id-btn-guardar-factura').prop('disabled', true);
+                            $('#btnAdd').prop('disabled', false);
+
+                        }).always(function () {
+                            console.log("complete");
+                        });
+                    }
+                }
+            });
+
+            $('#id-table-buscar-filtro tbody').on('click', 'tr', function (e) {
+                $(this).addClass('table-primary').siblings().removeClass('table-primary');
+                let json = $(this).data('json');
+                $('#id-tm-unidad').val('$' + Number(json.pund).toFixed(2));
+                $('#id-tm-caja').val('$' + Number(json.pcjafactor).toFixed(2));
+                $('#id-tm-stock').val(Number(json.stock).toFixed(2));
+            });
+
+            $('#id-table-buscar-filtro tbody').on('dblclick', 'tr', function (e) {
+                let json = $(this).data('json');
+                if (json.codigo != '') {
+                    $('#id-input-codigo-barra').val(json.codigo);
+                    $('#id-modal-buscar-productos').modal('hide');
+                    $('#id-form-producto-codigo-barra').submit();
+                    $('#id-input-codigo-barra').val('').focus();
+                }
+            });
+
+            $('#id-table-buscar-filtro tbody').on('click', 'button.seleccionar', function (e) {
+                let json = $(this).data('json');
+                if (json.codigo != '') {
+                    $('#id-input-codigo-barra').val(json.codigo);
+                    $('#id-modal-buscar-productos').modal('hide');
+                    $('#id-form-producto-codigo-barra').submit();
+                    $('#id-input-codigo-barra').val('').focus();
+                }
+            });
+
+            $('#id-modal-buscar-productos').on('hidden.bs.modal', function (e) {
+                $('#id-input-codigo-barra').val('').trigger('focus');
+            });
+
+            $('#id-modal-dialogo-alert').on('hidden.bs.modal', function (e) {
+                $('#id-input-codigo-barra').val('').trigger('focus');
+            });
+
+            $('#id-modal-guadar-documento').on('hidden.bs.modal', function (e) {
+                $('#id-input-codigo-barra').val('').trigger('focus');
+            });
+
+            $('#id-modal-registrar-cliente').on('hidden.bs.modal', function (e) {
+                $('#id-input-codigo-barra').val('').trigger('focus');
+            });
+
+            $('#id-modal-accion-autorizacion').on('hidden.bs.modal', function (e) {
+                venta.actualizar();
+                $('#id-input-codigo-barra').val('').trigger('focus');
+            });
+
+            $('#id-modal-accion-autorizacion').on('shown.bs.modal', function (e) {
+                $('#id-codigo-acceso').val('').trigger('focus');
+            });
+
+            $('#id-modal-buscar-productos').on('shown.bs.modal', function (e) {
+                $('#id-input-buscar-producto').trigger('focus');
+            });
+
+            $('#id-modal-dialogo-alert').on('shown.bs.modal', function (e) {
+                $('#id-btn-dialog-cerrar').trigger('focus');
+            });
+
+            $('#id-table-detalle-factura > tbody').on('change', 'input.cantidad', function (e) {
+                var element = $(this);
+                if (Number(element.val()) >= 0 && element.val().length) {
+                    var item = element.data('json');
+                    var old = Number(element.data('old'));
+                    var cantidad;
+
+                    if (item.balanza == 1) {
+                        cantidad = Number(element.val());
+                    } else {
+                        cantidad = Math.trunc(Number(element.val()));
+                        if (cantidad <= 0) cantidad = 1;
+                    }
+                    item.cantidad = cantidad;
+                    if (!venta.user_accion.disminuir_cantidad) {
+                        $('#id-form-accion-autorizacion').find('#id-codigo').val('');
+                        $('#id-form-accion-autorizacion').find('#id-productoid').val('');
+                        $('#id-form-accion-autorizacion').find('#id-codigo-acceso').val('');
+                        $('#id-form-accion-autorizacion').find('#id-valor-acceso').data('item', '');
+                        $('#id-form-accion-autorizacion').find('#id-accion-acceso').val('');
+                        if (item.cantidad < old) {
+                            $('#id-form-accion-autorizacion').find('#id-valor-acceso').data('item', item);
+                            $('#id-form-accion-autorizacion').find('#id-accion-acceso').val('DISMINUIR-ITEM');
+                            $('#id-modal-accion-autorizacion').modal('show');
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+                    venta.enviar_cantidad(item);
+                }
+            });
+
+            $('#id-table-detalle-factura > tbody').on('keydown', '.cantidad', function (e) {
+                var keyCode = (e.keyCode ? e.keyCode : e.which);
+                if (keyCode == 13) {
+                    var element = $(this);
+                    if (Number(element.val()) >= 0 && element.val().length) {
+                        var item = element.data('json');
+                        var cantidad;
+                        if (item.balanza == 1) {
+                            cantidad = Number(element.val());
+                        } else {
+                            cantidad = Math.trunc(Number(element.val()));
+                            if (cantidad <= 0) cantidad = 1;
+                        }
+                        item.cantidad = cantidad;
+                        if (!venta.user_accion.disminuir_cantidad) {
+                            $('#id-form-accion-autorizacion').find('#id-codigo').val('');
+                            $('#id-form-accion-autorizacion').find('#id-productoid').val('');
+                            $('#id-form-accion-autorizacion').find('#id-codigo-acceso').val('');
+                            $('#id-form-accion-autorizacion').find('#id-valor-acceso').data('item', '');
+                            $('#id-form-accion-autorizacion').find('#id-accion-acceso').val('');
+                            if (item.cantidad < old) {
+                                $('#id-form-accion-autorizacion').find('#id-valor-acceso').data('item', item);
+                                $('#id-form-accion-autorizacion').find('#id-accion-acceso').val('DISMINUIR-ITEM');
+                                $('#id-modal-accion-autorizacion').modal('show');
+                                e.preventDefault();
+                                return false;
+                            }
+                        }
+                        venta.enviar_cantidad(item);
+                    }
+                }
+            });
+
+            $('#id-table-detalle-factura > tbody').on('click', 'button.vmax,button.vmin', function (e) {
+                let operador = $(this).data('operador');
+                let input = $(this).closest('td').find('.cantidad');
+                input.data('valor', input.val());
+                let valor = Number(input.val());
+                valor += operador == '+' ? 1 : -1;
+                if (valor > 0) {
+                    input.val(valor);
+                } else {
+                    input.val(1);
+                }
+                input.change();
+            });
+
+            $("input[rel=seleccion]")
+                .focus(function () {
+                    $(this).select();
+                })
+                .mouseup(function (e) {
+                    e.preventDefault();
+                });
+
+            $('#id-btn-guardar-factura').on('click', function (e) {
+                e.preventDefault();
+                if (Object.keys(venta.factura.cliente).length <= 0) {
+                    fnToast('No ha seleccionado ningun cliente.', 3);
+                    $('#id-cli-nombre').focus();
+                    return;
+                }
+                venta.actualizar();
+                if (venta.factura.items.length <= 0) {
+                    fnToast('No se ha ingresado ningun items al detalle.', 3);
+                    $('#id-nombre-producto').focus();
+                    return;
+                }
+                if (venta.factura.total <= 0) {
+                    fnToast('El total de la Factura esta en cero.', 3);
+                    return;
+                }
+                if (venta.get_validar_excede_cupo()) {
+                    let disponible = venta.get_cupo_disponible();
+                    fnToast('Ha execedido el cupo disponible: ' + disponible.toFixed(2), 3);
+                    return;
+                }
+                $('#id-valor-cambio').val(venta.factura.total);
+                $('#id-cambio-display').val(0.00);
+
+                $('#id-btn-modal-guardar-pos-fa').prop('disabled', false);
+                $('#id-btn-modal-guardar-pos-nv').prop('disabled', true);
+                $('#id-select-tipo-factura').prop('selectedIndex', 0).trigger('change');
+                $('#id-modal-guadar-documento').modal('show');
+
+            });
+
+            $('#id-form-modal-factura').on({
+                submit: function (e) {
+                    e.preventDefault();
+                    venta.factura.efectivo = 0;
+                    if (venta.factura.contado && venta.factura.formapago == 'EFE') {
+                        let valor = Number($('#id-valor-cambio').val());
+                        if (typeof valor === 'number') {
+                            venta.factura.efectivo = valor;
+                            venta.factura.vuelto_cliente = Math.round((venta.factura.efectivo - venta.factura.total) * 100 + Number.EPSILON) / 100;
+                            if (venta.factura.vuelto_cliente < 0) {
+                                fnToast('No se ha cancelado en su totalidad el documento..', 3);
+                                return;
+                            }
+                        } else {
+                            fnToast('El valor en efectivo no es valido..', 3);
+                            return;
+                        }
+                    }
+                    $('#id-btn-modal-guardar-pos-fa').prop('disabled', true);
+                    $('#id-btn-modal-guardar-pos-nv').prop('disabled', true);
+                    $('#id-btn-modal-guardar-cotizacion').prop('disabled', true);
+
+                    venta.factura.tipo = $('#id-select-tipo-factura').val();
+                    venta.factura.fecha = $('#id-fecha').val();
+
+                    $.ajax({
+                        url: '/pos/punto-venta/factura/',
+                        data: {
+                            accion: "guadar-factura",
+                            factura: JSON.stringify(venta.factura),
+                            cliente_id: venta.factura.clienteid,
+                            termino: venta.factura.cliente.termino_cod,
+                            factura_total: venta.factura.total,
+                            caja_id: venta.factura.cajaid,
+                            contado: venta.factura.contado,
+                            forma_pago: venta.factura.formapago,
+                            tipo_factura: venta.factura.tipo
+                        },
+                        method: 'POST',
+                        dataType: 'json',
+                    }).done(function (data) {
+                        if (data.resp) {
+                            fnToast('Documento guardado correctamente.. ');
+                            $('#id-modal-guadar-documento').modal('hide');
+                            venta.resetForm();
+                            let imprimir = $('#id-accion-imprimir').val() == '1' ? true : false;
+                            if (imprimir) {
+                                form_send(
+                                    '{% url "pos_punto_venta_imprimir" %}',
+                                    'GET', 'popup', 'scrollbars=no,resizable=no,Height=1,Width=1,left=2400,top=-100,visible=false,alwaysLowered=yes',
+                                    'data_json',
+                                    {tipo: data.tipo, documentos: data.documentos}
+                                );
+                            }
+                        } else {
+                            fnToast(data.error, 3);
+                            $('#id-btn-modal-guardar-pos-fa').prop('disabled', false);
+                            $('#id-btn-modal-guardar-pos-nv').prop('disabled', false);
+                            $('#id-btn-modal-guardar-cotizacion').prop('disabled', false);
+                        }
+                    }).fail(function (jqXHR, textStatus) {
+                        $('#id-btn-modal-guardar-pos-fa').prop('disabled', false);
+                        $('#id-btn-modal-guardar-pos-nv').prop('disabled', false);
+                        $('#id-btn-modal-guardar-cotizacion').prop('disabled', false);
+                        fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                    }).always(function () {
+                        console.log("complete");
+                    });
+                }
+            });
+
+            $('#id-modal-guadar-documento').on('shown.bs.modal', function () {
+                let forma_pago = $('#id-select-form-pago').val();
+                if (forma_pago == 'EFE') {
+                    $('#id-valor-cambio').trigger('select');
+                } else {
+                    $('#id-select-tipo-factura').trigger('select');
+                }
+            });
+
+            $('#id-btn-forma-pago').click(function (e) {
+                $('#id-select-form-pago').val('TAR');
+                $('#id-select-form-pago').change();
+            });
+
+            $('#id-valor-cambio').on('keyup', function (e) {
+                let valor = Number($(this).val());
+                if (typeof valor === 'number') {
+                    $('#id-cambio-display').val(Math.round((valor - venta.factura.total) * 100 + Number.EPSILON) / 100);
+                }
+            });
+
+            $('#id-valor-cambio').on('keydown', function (e) {
+                var keyCode = (e.keyCode ? e.keyCode : e.which);
+                if (keyCode == 13) {
+                    $('#id-select-tipo-factura').focus();
+                    e.preventDefault();
+                }
+            });
+
+            $('#id-select-tipo-factura').on('keydown', function (e) {
+                var keyCode = (e.keyCode ? e.keyCode : e.which);
+                if (keyCode == 13) {
+                    $('#id-btn-modal-guardar-pos-fa').focus();
+                    e.preventDefault();
+                }
+            });
+
+            $('#id-select-form-pago').on('change', function (e) {
+
+                let valor = $(this).val();
+                $('div.sw-cheque').hide();
+                venta.factura.formapago = valor;
+
+                $('#id-valor-cambio').prop('readonly', true);
+                $('#id-cambio-display').prop('readonly', true);
+                $('#id-select-tipo-factura').prop('disabled', false);
+
+                switch (valor) {
+                    case 'EFE':
+                        venta.factura.contado = '1';
+                        $('#id-valor-cambio').prop('readonly', false);
+                        $('#id-cambio-display').prop('readonly', false);
+                        venta.actualizar();
+                        break;
+                    case 'TAR':
+                        venta.factura.contado = '0';
+                        $('#id-select-tipo-factura').prop('disabled', true);
+                        $('#id-modal-forma-pago').modal('show');
+                        break;
+                    case 'CHE':
+                        venta.factura.contado = '0';
+                        $('#id-select-tipo-factura').prop('disabled', true);
+                        $('div.sw-cheque').show();
+                        break;
+                    case 'CRE':
+                        venta.factura.contado = '0';
+                        venta.actualizar();
+                }
+                $('#id-mensaje-producto').html('');
+                $('#id-mensaje-display').html('');
+                $('#id-input-codigo-barra').focus();
+            });
+
+            $('#id-select-tipo-factura').on('change', function (e) {
+                let tipo = $(this).val();
+                venta.factura.tipo = tipo;
+                if (tipo == 'NV') {
+                    $('#id-btn-modal-guardar-pos-nv').prop('disabled', false);
+                } else {
+                    $('#id-btn-modal-guardar-pos-nv').prop('disabled', true);
+                }
+            });
+
+            $('#id-form-modal-factura').find('button[rel=btn-accion-guardar]').on('click', function (e) {
+                let imprimir = $(this).val();
+                $('#id-accion-imprimir').val(imprimir);
+            });
+
+            $('input.cli-default').on('keydown', function (e) {
+                var keyCode = (e.keyCode ? e.keyCode : e.which);
+                let element = $(this);
+                if (keyCode == 13) {
+                    if (element.val() == '' || element.val().length <= 0) {
+                        venta.factura.cliente = cliente_final;
+                        $('#id-cliente-ruc').val(venta.factura.cliente.ruc);
+                        $('#id-cli-nombre').val(venta.factura.cliente.nombre);
+                    }
+                }
+            });
+
+            $('input.cli-default').on('blur', function (e) {
+                let element = $(this);
+                if (element.val() == '' || element.val().length <= 0) {
+                    venta.factura.cliente = cliente_final;
+                    $('#id-cliente-ruc').val(venta.factura.cliente.ruc);
+                    $('#id-cli-nombre').val(venta.factura.cliente.nombre);
+                }
+            });
+
+            $('#id-form-accion-autorizacion').on({
+                submit: function (e) {
+                    e.preventDefault();
+
+                    let codigo = $(this).find('#id-codigo').val();
+                    let productoid = $(this).find('#id-productoid').val();
+                    let accion = $(this).find('#id-accion-acceso').val();
+                    $(this).find('#id-btn-accion-confirmar').prop('disabled', true);
+
+                    $.ajax({
+                        async: false,
+                        url: '/seguridad/accion-autorizacion/',
+                        data: {
+                            accion: "pos-autorizacion",
+                            codigo_acceso: $(this).find('#id-codigo-acceso').val(),
+                            eliminar: venta.user_accion.eliminar_item,
+                            disminuir: venta.user_accion.disminuir_cantidad,
+                            cancelar: venta.user_accion.cancelar
+                        },
+                        method: 'POST',
+                        dataType: 'json',
+                        beforeSend: function (xhr, settings) {
+                            $('#id-accion-procesando').html('Procesando..');
+                            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                            }
+                        },
+                    }).done(function (data) {
+                        $('#id-btn-accion-confirmar').prop('disabled', false);
+                        if (data.resp) {
+                            let user = data.usuario;
+                            switch (accion) {
+                                case 'DELETE-ITEM':
+                                    venta.user_accion.username = user.username;
+                                    venta.user_accion.usuario_id = user.usuario_id;
+                                    venta.eliminar(codigo, productoid);
+                                    $('#id-modal-accion-autorizacion').modal('hide');
+                                    break;
+                                case 'DISMINUIR-ITEM':
+                                    venta.user_accion.username = user.username;
+                                    venta.user_accion.usuario_id = user.usuario_id;
+                                    let item = $('#id-form-accion-autorizacion').find('#id-valor-acceso').data('item');
+                                    venta.enviar_cantidad(item);
+                                    $('#id-modal-accion-autorizacion').modal('hide');
+                                    break;
+                                case 'POS-CANCELAR':
+                                    $('#id-modal-accion-autorizacion').modal('hide');
+                                    window.location.reload();
+                            }
+                        } else {
+                            fnToast(data.error, 3);
+                        }
+                        $('#id-accion-procesando').html('Autorización');
+                    }).fail(function (jqXHR, textStatus) {
+                        fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                        $('#id-btn-accion-confirmar').prop('disabled', false);
+                        $('#id-accion-procesando').html('Autorización');
+                    }).always(function () {
+                        console.log("complete");
+                    });
+                }
+            });
+
+            options = {
+                url: function (criterio) {
+                    return "/inventario/ajax/punto-venta/precio-autocomplete/?accion=p-consulta-producto-autocomplete&almacen=1&criterio=" + criterio;
+                },
+                listLocation: "items",
+                getValue: "nombre",
+                list: {
+                    onClickEvent: function () {
+                        let p = $('#id-consulta-producto-nombre').getSelectedItemData();
+                        if (p.codigo != '') {
+                            $('#id-input-consultar-precio').val(p.codigo);
+                            $('#id-input-consultar-precio').focus();
+                            $('#id-form-consultar-precio').submit();
+                        }
+                    },
+                    onKeyEnterEvent: function () {
+                        let p = $('#id-consulta-producto-nombre').getSelectedItemData();
+                        if (p.codigo != '') {
+                            $('#id-input-consultar-precio').val(p.codigo);
+                            $('#id-input-consultar-precio').focus();
+                            $('#id-form-consultar-precio').submit();
+                        }
+                    }
+                },
+                ajaxSettings: {
+                    dataType: "json",
+                    beforeSend: function () {
+                    }
+                },
+            };
+
+            $("#id-consulta-producto-nombre").easyAutocomplete(options);
+
+            $('#id-btn-show-modal-consultar-precio').on('click', function (e) {
+                $('#id-modal-consultar-precios').modal('show');
+            })
+
+            $('#id-modal-consultar-precios').on('shown.bs.modal', function (e) {
+                $('#id-input-consultar-precio').trigger('focus');
+            });
+            $('#id-modal-consultar-precios').on('hidden.bs.modal', function (e) {
+                venta.reset_precios();
+                $('#id-input-codigo-barra').val('').focus();
+            });
+            $("#id-tipo-consulta").on('change', function (e) {
+                e.preventDefault();
+                let element = $(this);
+
+                if (element.is(":checked")) {
+                    $('#id-consultar-nombre').removeAttr('style');
+                    $('#id-consultar-barra').attr('style', 'display:none;');
+                    $('#id-consulta-producto-nombre').val("").trigger('focus');
+                } else {
+                    $('#id-consultar-barra').removeAttr('style');
+                    $('#id-consultar-nombre').attr('style', 'display:none;');
+                    $('#id-input-consultar-precio').val("").focus();
+                }
+            });
+
+            $('#id-form-consultar-precio').on({
+                submit: (e) => {
+                    e.preventDefault();
+                    var codigo = $('#id-input-consultar-precio').val();
+
+                    $.ajax({
+                        url: '/inventario/ajax/punto-venta/precio-codigo-barra/',
+                        data: {
+                            accion: 'p-consulta-precio-codigo-barra',
+                            codigo: codigo
+                        },
+                        beforeSend: function () {
+                            $('#id-producto-descripcion').text(" Cargando Producto...")
+                        },
+                        method: 'GET',
+                        dataType: 'json',
+                    }).done(function (data) {
+                        if (data.resp) {
+                            let producto = data.producto;
+                            $('#id-producto-descripcion').text(producto.nombre);
+                            $('#id-precio-producto').text(producto.precio_pvp);
+                            $('#id-codigo-barra').val(producto.codigo);
+                            $('#id-codigo-producto').val(producto.codigo_producto);
+                            $('#id-nombre').val(producto.nombre);
+                            $('#id-descripcion').val(producto.formato);
+                            $('#id-stock-sistema').val(producto.total_bodegas);
+
+                            venta.render_precios("#js-template-producto-empaques", "#id-precios-empaques tbody", producto);
+                            venta.render_precios("#js-template-existencia-productos", "#id-existencias-producto tbody", producto);
+
+                        } else {
+                            fnToast(data.error, 3);
+                        }
+
+                    }).fail(function (jqXHR, textStatus) {
+                        fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                    }).always(function () {
+                        console.log("complete");
+                    });
+
+                }
+            });
+
+            $('#id-btn-lector-codigo-barra').on('click', function (e) {
+                e.preventDefault();
+                $('#id-modal-lector-codigo-barra').modal('show');
+            });
+
+            $('#id-modal-lector-codigo-barra').on('shown.bs.modal', function (e) {
+                startScanner();
+            });
+
+            $('#id-modal-lector-codigo-barra').on('hidden.bs.modal', function (e) {
+                //$('#id-contenedor-camara').html('');
+                Quagga.stop();
+            });
+
+            var startScanner = function () {
+                var $resultados = document.querySelector("#id-input-codigo-barra");
+                Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: document.querySelector('#id-contenedor-camara'),
+                        constraints: {
+                            width: {max: 500},
+                            height: {min: 500},
+                            aspectRatio: {min: 1, max: 100},
+                            facingMode: "environment"
+                        },
+                    },
+                    locator: {
+                        patchSize: "medium",
+                        halfSample: true
+                    },
+                    numOfWorkers: 0,
+                    locate: true,
+                    frequency: 1,
+                    singleChannel: false,
+                    decoder: {
+                        readers: [
+                            "code_128_reader",
+                            "ean_reader",
+                            "ean_8_reader",
+                            "code_39_reader",
+                            "code_39_vin_reader",
+                            "codabar_reader",
+                            "upc_reader",
+                            "upc_e_reader",
+                            "i2of5_reader"
+                        ]
+                    }
+                }, function (err) {
+                    if (err) {
+                        console.log(err);
+                        return
+                    }
+                    console.log("Initialization finished. Ready to start");
+                    Quagga.start();
+                    // Set flag to is running
+                    _scannerIsRunning = true;
+                });
+
+                Quagga.onProcessed(function (result) {
+                    var drawingCtx = Quagga.canvas.ctx.overlay,
+                        drawingCanvas = Quagga.canvas.dom.overlay;
+
+                    if (result) {
+                        if (result.boxes) {
+                            drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+                            result.boxes.filter(function (box) {
+                                return box !== result.box;
+                            }).forEach(function (box) {
+                                Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {
+                                    color: "green",
+                                    lineWidth: 2
+                                });
+                            });
+                        }
+
+                        if (result.box) {
+                            Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {
+                                color: "#00F",
+                                lineWidth: 2
+                            });
+                        }
+
+                        if (result.codeResult && result.codeResult.code) {
+                            Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {
+                                color: 'red',
+                                lineWidth: 3
+                            });
+                        }
+                    }
+                });
+
+                Quagga.onDetected(function (data) {
+                    var code = data.codeResult.code;
+                    if ($resultados.value !== code) {
+                        $resultados.value = code;
+                        //$('#id-modal-lector-codigo-barra').modal('hide');
+                        $('#id-form-producto-codigo-barra').submit();
+                    }
+                });
+            }
+        });
+
+        const IVA = Number("{{ tasa_impuesto }}");
+        var venta = {
+            factura: {
+                cotizacion_id: '',
+                cotizacion_numero: '',
+                divisionid: '{{ caja.division.id }}',
+                divisaid: '{{ caja.divisa }}',
+                fecha: '{{ hoy|date:"d/m/Y" }}',
+                fecha_entrega: '{{ hoy|date:"d/m/Y" }}',
+                tipo: '',
+                formapago: 'EFE',
+                bodegaid: '{{ bodega.id }}',
+                cliente: {
+                    id: "{{ cliente.id }}",
+                    cod: "{{ cliente.codigo }}",
+                    ruc: "{{ cliente.ruc }}",
+                    nombre: "{{ cliente.nombre }}",
+                    precio_lista: {% if cliente.precio_lista %}true{% else %}false{% endif %},
+                    precio_activo: "{{ cliente.precio_activo }}",
+                    lista_precio: "{{ cliente.get_precio_activo_display }}",
+                    terminoid: "{{ cliente.termino }}",
+                    termino_display: "{{ termino.nombre }}",
+                    termino_cod: "{{ termino.codigo }}",
+                    zona_id: "{{ cliente.zona_id }}",
+                    cupo: Number("{{ cliente.cupo }}"),
+                    saldo: Number('0.00'),
+                    disponible: Number('0.00'),
+                    vendedor: "{{ cliente.vendedor.nombre }}",
+                    vendedorid: "{{ cliente.vendedor_id }}",
+                    tasa_descuento: Number("{{ cliente.tasa_descuento }}"),
+                    tasa_incremento: Number("{{ cliente.tasa_incremento }}"),
+                },
+                clienteid: "{{ cliente.id }}",
+                empleadoid: "{{ empleado.id }}",
+                subtotal: 0,
+                descuento: 0,
+                impuesto: 0,
+                total: 0,
+                valor: 0,
+                saldo: 0,
+                costototal: 0,
+                total_comision: 0,
+                items: [],
+                detalle: '',
+                nota: '',
+                contado: '1',
+                efectivo: 0,
+                cheque: 0,
+                tarjeta: 0,
+                credito: 0,
+                cupones: 0,
+                vence: '{{ hoy|date:"d/m/Y" }}',
+                banco: '',
+                numero_cuenta: '',
+                numero_cheque: '',
+                numero_tarjeta: '',
+                nombre_tarjeta: '',
+                transporte: '',
+                caja_serie: '{{ caja.serie }}',
+                cajaid: '{{ caja.id }}',
+                caja_code: '{{ caja.codigo }}',
+                numcartilla: '',
+                entregadorid: '',
+                verificadorid: '',
+                pagada: 0,
+                cobradorid: '',
+                diacobro: '',
+                pc: '',
+                sucursalid: '{{ sucursal.codigo }}',
+                sucursal: '{{ sucursal.nombre }}',
+                base_tarifa_iva: 0,
+                base_tarifa_cero: 0,
+                base_descuento_iva: 0,
+                base_descuento_cero: 0,
+                controla_stock: '{{ controla_stock }}',
+                ptg_iva: IVA,
+                vuelto_cliente: 0,
+                observacion: ''
+            },
+            user_accion: {
+                username: '',
+                usuario_id: '',
+                eliminar_item: {% if user_parametro.pos_eliminar_item %}true{% else %}false{% endif %},
+                disminuir_cantidad: {% if user_parametro.pos_disminuir_cantidad %}true{% else %}false{% endif %},
+                cancelar: {% if user_parametro.pos_cancelar %}true{% else %}false{% endif %},
+                salir: {% if user_parametro.pos_salir %}true{% else %}false{% endif %},
+                con_cotizacion: {% if con_cotizacion %}true{% else %}false{% endif %},
+            },
+            add: function (item) {
+                let oitem = this.existe(item);
+                if (oitem == null) {
+
+                    if (item.coniva) {
+                        item.tasaimpuesto = IVA;
+                        item.ctaimpuestoid = "{{ cta_impuestoid }}";
+                        item.precio_display = Math.round(((item.precio_factor * (1 + (item.tasaimpuesto / 100)))) * 10000) / 10000;
+
+                    } else {
+                        item.tasaimpuesto = 0;
+                        item.ctaimpuestoid = "";
+                        item.precio_display = item.precio_factor;
+                    }
+
+                    item.subtotal = Math.round((item.cantidad * item.precio_factor) * 100) / 100;
+                    this.factura.items.push(item);
+                    item.accion = 'add';
+                    return item;
+                }
+                oitem.accion = 'edit';
+                return oitem;
+            },
+            existe: function (item) {
+                for (var i in this.factura.items) {
+
+                    if (item.productoid == this.factura.items[i].productoid && item.codigo == this.factura.items[i].codigo) {
+
+                        this.factura.items[i].cantidad += item.cantidad;
+                        this.factura.items[i].precio = item.precio;
+                        this.factura.items[i].precio_factor = item.precio_factor;
+
+                        if (item.coniva) {
+                            this.factura.items[i].tasaimpuesto = IVA;
+                            this.factura.items[i].ctaimpuestoid = "{{ cta_impuestoid }}";
+                            this.factura.items[i].precio_display = Math.round((((this.factura.items[i].precio_factor * (1 + (this.factura.items[i].tasaimpuesto / 100))))) * 10000) / 10000;
+                        } else {
+                            this.factura.items[i].tasaimpuesto = 0;
+                            this.factura.items[i].ctaimpuestoid = "";
+                            this.factura.items[i].precio_display = item.precio_factor;
+                        }
+                        this.factura.items[i].subtotal = Math.round((this.factura.items[i].cantidad * this.factura.items[i].precio_factor) * 100) / 100;
+
+                        $('#id-mensaje-producto').html('Producto: ' + item.nombre);
+                        $('#id-mensaje-display').html('<br>Se ha incrementado en: ' + this.factura.items[i].cantidad);
+                        $('#id-mensaje-display').addClass('blink');
+                        return this.factura.items[i];
+                    }
+                }
+                $('#id-mensaje-display').removeClass('blink');
+                return null;
+            },
+            get_cantidad: function (codigo) {
+                for (let item of this.factura.items) {
+                    if (item.codigo.toUpperCase() == codigo.toUpperCase()) {
+                        return item.cantidad;
+                    }
+                }
+                return 0;
+            },
+            get_tasa_descuento: function (item) {
+                if (venta.factura.contado == '1') {
+                    return Math.round((Number(item.tasa_descuento_contado) + Number(this.factura.cliente.tasa_descuento)) * 100) / 100;
+                } else {
+                    return Math.round((Number(item.tasa_descuento_credito) + Number(this.factura.cliente.tasa_descuento)) * 100) / 100;
+                }
+                return 0;
+            },
+            editar: function (item) {
+
+                for (var i in this.factura.items) {
+
+                    if (this.factura.items[i].productoid == item.productoid && this.factura.items[i].codigo == item.codigo) {
+
+                        this.factura.items[i].cantidad = item.cantidad;
+                        this.factura.items[i].precio = item.precio;
+                        this.factura.items[i].precio_factor = item.precio_factor;
+                        this.factura.items[i].precio_final = item.precio_final;
+
+                        if (this.factura.items[i].coniva) {
+                            this.factura.items[i].tasaimpuesto = IVA;
+                            this.factura.items[i].ctaimpuestoid = "{{ cta_impuestoid }}";
+                            this.factura.items[i].precio_display = Math.round((this.factura.items[i].precio_factor * (1 + (this.factura.items[i].tasaimpuesto / 100))) * 10000) / 10000;
+
+                        } else {
+
+                            this.factura.items[i].tasaimpuesto = 0;
+                            this.factura.items[i].ctaimpuestoid = "";
+                            this.factura.items[i].precio_display = item.precio_factor;
+                        }
+                        this.factura.items[i].subtotal = Math.round((this.factura.items[i].cantidad * this.factura.items[i].precio_factor) * 100) / 100;
+                        return this.factura.items[i];
+                    }
+                }
+                return null;
+            },
+            modal_eliminar: function (codigo, productoid) {
+                $('#id-form-accion-autorizacion').find('#id-codigo').val(codigo);
+                $('#id-form-accion-autorizacion').find('#id-productoid').val(productoid);
+                $('#id-form-accion-autorizacion').find('#id-codigo-acceso').val('');
+                $('#id-form-accion-autorizacion').find('#id-accion-acceso').val('DELETE-ITEM');
+                $('#id-modal-accion-autorizacion').modal('show');
+            },
+            eliminar: function (codigo, productoid) {
+                for (var i in this.factura.items) {
+                    if (this.factura.items[i].codigo == codigo && this.factura.items[i].productoid == productoid) {
+                        this.factura.items.splice(i, 1);
+                        this.actualizar();
+                        this.cotizacion_delete({codigo: codigo, productoid: productoid, accion: 'one'});
+                        return true;
+                    }
+                }
+                return false;
+            },
+            eliminar_lista: function () {
+                if (this.factura.items.length > 0) {
+                    this.factura.items = [];
+                    this.actualizar();
+                }
+            },
+            actualizar: function () {
+                this.factura.subtotal = 0;
+                this.factura.descuento = 0;
+                this.factura.impuesto = 0;
+                this.factura.total = 0;
+                this.factura.costototal = 0;
+                this.factura.total_comision = 0;
+                this.factura.base_tarifa_cero = 0;
+                this.factura.base_tarifa_iva = 0;
+                this.factura.base_descuento_iva = 0;
+                this.factura.base_descuento_cero = 0;
+
+                for (var i in this.factura.items) {
+
+                    this.factura.items[i].tasa_descuento = this.get_tasa_descuento(this.factura.items[i]);
+                    this.factura.costototal += Math.round(((this.factura.items[i].costo_compra * (this.factura.items[i].cantidad * this.factura.items[i].factor))) * 100) / 100;
+                    this.factura.items[i].descuento = Math.round(((this.factura.items[i].cantidad * this.factura.items[i].precio_factor) * (this.factura.items[i].tasa_descuento / 100)) * 100) / 100;
+
+                    if (this.factura.items[i].coniva) {
+                        let impuesto = (((this.factura.items[i].cantidad * this.factura.items[i].precio_factor) - ((this.factura.items[i].cantidad * this.factura.items[i].precio_factor) * (this.factura.items[i].tasa_descuento / 100))) * (this.factura.items[i].tasaimpuesto / 100));
+                        if (this.get_mayor_decimal_cinco(impuesto)) {
+                            this.factura.items[i].impuesto = Math.round(impuesto * 100) / 100;
+                        } else {
+                            this.factura.items[i].impuesto = Math.floor(impuesto * 100) / 100;
+                        }
+                        this.factura.base_tarifa_iva += this.factura.items[i].subtotal;
+                        this.factura.base_descuento_iva += this.factura.items[i].descuento;
+                    } else {
+
+                        this.factura.items[i].impuesto = 0;
+                        this.factura.base_tarifa_cero += this.factura.items[i].subtotal;
+                        this.factura.base_descuento_cero += this.factura.items[i].descuento;
+                    }
+
+                    this.factura.items[i].total = Math.round((this.factura.items[i].subtotal - this.factura.items[i].descuento + this.factura.items[i].impuesto) * 100) / 100;
+                    this.factura.subtotal += this.factura.items[i].subtotal;
+                    this.factura.impuesto += this.factura.items[i].impuesto;
+                    this.factura.descuento += this.factura.items[i].descuento;
+                    this.factura.total += this.factura.items[i].total;
+
+                    if (this.factura.contado == '0') {
+                        this.factura.items[i].valor_comision = Math.round(((this.factura.items[i].cantidad * this.factura.items[i].comision_credito)) * 100) / 100;
+                    } else {
+                        this.factura.items[i].valor_comision = Math.round(((this.factura.items[i].cantidad * this.factura.items[i].comision_contado)) * 100) / 100;
+                    }
+                    this.factura.total_comision += this.factura.items[i].valor_comision;
+                }
+
+                this.factura.subtotal = Math.round(this.factura.subtotal * 100) / 100;
+                this.factura.impuesto = Math.round(this.factura.impuesto * 100) / 100;
+                this.factura.descuento = Math.round(this.factura.descuento * 100) / 100;
+                this.factura.total = Math.round(this.factura.total * 100) / 100;
+                this.factura.costototal = Math.round(this.factura.costototal * 100) / 100;
+                this.factura.total_comision = Math.round(this.factura.total_comision * 100) / 100;
+                this.factura.base_tarifa_cero = Math.round(this.factura.base_tarifa_cero * 100) / 100;
+                this.factura.base_tarifa_iva = Math.round(this.factura.base_tarifa_iva * 100) / 100;
+
+                $('#id-subtotal').val(NumFormat(this.factura.subtotal));
+                $('#id-descuento-total').val(NumFormat(this.factura.descuento));
+                $('#id-impuesto-total').val(NumFormat(this.factura.impuesto));
+                let total_pagar = NumFormat(this.factura.total).toString();
+
+                $('#id-total-pagar').val(total_pagar);
+                $('#id-total-pagar-display').html('$' + total_pagar);
+                $('#id-total-pagar-foot').html('$' + total_pagar);
+                $('#id-base-tarifa-cero').val(NumFormat(this.factura.base_tarifa_cero).toString());
+                $('#id-base-tarifa-iva').val(NumFormat(this.factura.base_tarifa_iva).toString());
+
+                $('#id-items-lista').html(this.factura.items.length);
+                this.render();
+
+                if (this.get_validar_excede_cupo()) {
+                    $('#id-mensaje-producto').html('');
+                    $('#id-mensaje-display').html('<br>Atención ha exedido el cupo permitido!..');
+                    $('#id-mensaje-display').addClass('blink');
+                }
+                $('#id-cliente-disponible').val(this.factura.cliente.disponible.toFixed(2));
+            },
+            render: function () {
+                var tmpl = $.templates("#js-template-detalle-factura"); // Get compiled template
+                var html = tmpl.render(this.factura);      // Render template using data - as HTML string
+                $("#id-table-detalle-factura tbody").html(html);
+            },
+            resetForm: function () {
+                this.factura.fecha = fecha_actual;
+                this.factura.fecha_entrega = fecha_actual;
+                this.factura.vence = fecha_actual;
+                this.factura.cliente = cliente_final;
+                this.factura.clienteid = cliente_final.id;
+
+                this.factura.cotizacion_id = '';
+                this.factura.cotizacion_numero = '';
+                this.factura.tipo = '';
+                this.factura.formapago = 'EFE';
+                this.factura.subtotal = 0;
+                this.factura.descuento = 0;
+                this.factura.impuesto = 0;
+                this.factura.total = 0;
+                this.factura.valor = 0;
+                this.factura.saldo = 0;
+                this.factura.costototal = 0;
+                this.factura.total_comision = 0;
+                this.factura.detalle = '';
+                this.factura.nota = '';
+                this.factura.contado = '1';
+                this.factura.efectivo = 0;
+                this.factura.cheque = 0;
+                this.factura.tarjeta = 0;
+                this.factura.credito = 0;
+                this.factura.cupones = 0;
+                this.factura.banco = '';
+                this.factura.numero_cuenta = '';
+                this.factura.numero_cheque = '';
+                this.factura.numero_tarjeta = '';
+                this.factura.nombre_tarjeta = '';
+                this.factura.transporte = '';
+                this.factura.entregadorid = '';
+                this.factura.verificadorid = '';
+                this.factura.cobradorid = '';
+                this.factura.pc = '';
+                this.factura.base_tarifa_iva = 0;
+                this.factura.base_tarifa_cero = 0;
+                this.factura.base_descuento_iva = 0;
+                this.factura.base_descuento_cero = 0;
+                this.factura.ptg_iva = IVA;
+                this.factura.vuelto_cliente = 0;
+                this.factura.items = [];
+                this.actualizar();
+
+                $('#id-fecha').val(this.factura.fecha);
+                $('#id-cliente-ruc').val(this.factura.cliente.ruc);
+                $('#id-cli-nombre').val(this.factura.cliente.nombre);
+                $('#id-input-codigo-barra').val('');
+                $('#id-filter-producto').val('');
+
+                $('#id-cliente-cupo').val('0.00');
+                $('#id-cliente-saldo').val('0.00');
+                $('#id-cliente-disponible').val('0.00');
+
+                $('#id-mensaje-producto').html('');
+                $('#id-mensaje-display').html('');
+                $('#id-mensaje-display').removeClass();
+
+                $('#myTabContent').prop('disabled', true);
+                $('#btnAdd').prop('disabled', false);
+                $('#btnAdd').click();
+            },
+            cotizacion_add: function (item) {
+                if (this.user_accion.con_cotizacion) {
+                    let cotizacion = {};
+                    let accion = item.accion == 'add' ? 'cotizacion-add-item' : 'cotizacion-edit-item';
+                    cotizacion.cotizacion_id = venta.factura.cotizacion_id;
+                    cotizacion.fecha = venta.factura.fecha;
+                    cotizacion.clienteid = venta.factura.clienteid;
+                    cotizacion.nombre = venta.factura.cliente.nombre;
+                    cotizacion.terminoid = venta.factura.cliente.terminoid;
+                    cotizacion.contado = venta.factura.contado;
+                    cotizacion.vendedorid = venta.factura.cliente.vendedorid;
+                    cotizacion.sucursalid = venta.factura.sucursalid;
+                    cotizacion.divisionid = venta.factura.divisionid;
+                    cotizacion.divisaid = venta.factura.divisaid;
+
+                    if (cotizacion.cotizacion_id == '') {
+                        cotizacion.cajaid = venta.factura.cajaid;
+                        cotizacion.caja_code = venta.factura.caja_code;
+                        cotizacion.empleadoid = venta.factura.empleadoid;
+                        cotizacion.bodegaid = venta.factura.bodegaid;
+                    }
+
+                    cotizacion.subtotal = venta.factura.subtotal;
+                    cotizacion.descuento = venta.factura.descuento;
+                    cotizacion.impuesto = venta.factura.impuesto;
+                    cotizacion.total = venta.factura.total;
+                    cotizacion.base_tarifa_cero = venta.factura.base_tarifa_cero;
+                    cotizacion.base_tarifa_iva = venta.factura.base_tarifa_iva;
+                    cotizacion.base_descuento_cero = venta.factura.base_descuento_cero;
+                    cotizacion.base_descuento_iva = venta.factura.base_descuento_iva;
+                    cotizacion.item = item;
+
+                    $.ajax({
+                        url: '/pos/punto-venta/factura/',
+                        data: {
+                            accion: accion,
+                            cotizacion: JSON.stringify(cotizacion),
+                            cotizacion_id: cotizacion.cotizacion_id
+                        },
+                        method: 'POST',
+                        dataType: 'json',
+                        beforeSend: function (xhr, settings) {
+                            $('#id-display-actualizacion').show();
+                            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                            }
+                        },
+                    }).done(function (data) {
+                        if (data.resp) {
+                            venta.factura.cotizacion_id = data.cotizacion.id;
+                            venta.factura.cotizacion_numero = data.cotizacion.numero;
+                        }
+                        $('#id-display-actualizacion').hide();
+                    }).fail(function (jqXHR, textStatus) {
+                        $('#id-display-actualizacion').hide();
+                    }).always(function () {
+                        console.log("complete");
+                    });
+                }
+                return true;
+            },
+            cotizacion_delete: function (item) {
+                if (this.user_accion.con_cotizacion) {
+                    let cotizacion = {};
+                    cotizacion.cotizacion_id = venta.factura.cotizacion_id;
+                    cotizacion.subtotal = venta.factura.subtotal;
+                    cotizacion.descuento = venta.factura.descuento;
+                    cotizacion.impuesto = venta.factura.impuesto;
+                    cotizacion.total = venta.factura.total;
+                    cotizacion.base_tarifa_cero = venta.factura.base_tarifa_cero;
+                    cotizacion.base_tarifa_iva = venta.factura.base_tarifa_iva;
+                    cotizacion.base_descuento_cero = venta.factura.base_descuento_cero;
+                    cotizacion.base_descuento_iva = venta.factura.base_descuento_iva;
+                    cotizacion.anuladopor = venta.user_accion.username;
+                    cotizacion.usuario_id = venta.user_accion.usuario_id;
+
+                    cotizacion.item = item;
+                    $.ajax({
+                        async: false,
+                        url: '/pos/punto-venta/factura/',
+                        data: {
+                            accion: "cotizacion-delete-item",
+                            cotizacion: JSON.stringify(cotizacion),
+                            cotizacion_id: cotizacion.cotizacion_id,
+                            eliminar: venta.user_accion.eliminar_item ? '1' : '0',
+                            disminuir: venta.user_accion.disminuir_cantidad ? '1' : '0',
+                            cancelar: venta.user_accion.cancelar ? '1' : '0'
+                        },
+                        method: 'POST',
+                        dataType: 'json',
+                        beforeSend: function (xhr, settings) {
+                            $('#id-display-actualizacion').show();
+                            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                            }
+                        },
+                    }).done(function (data) {
+                        if (data.resp) {
+                            console.log('Eliminado correctamente');
+                        } else {
+                            fnToast(data.error, 3);
+                        }
+                        $('#id-display-actualizacion').hide();
+                    }).fail(function (jqXHR, textStatus) {
+                        $('#id-display-actualizacion').hide();
+                    }).always(function () {
+                        console.log("complete");
+                    });
+                }
+                return true;
+            },
+            cotizacion_update: function () {
+                if (this.user_accion.con_cotizacion) {
+                    $.ajax({
+                        url: '/pos/punto-venta/factura/',
+                        data: {
+                            accion: "cotizacion-update",
+                            cotizacion: JSON.stringify(venta.factura),
+                            cotizacion_id: venta.factura.cotizacion_id
+                        },
+                        method: 'POST',
+                        dataType: 'json',
+                        beforeSend: function (xhr, settings) {
+                            $('#id-display-actualizacion').show();
+                            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                            }
+                        },
+                    }).done(function (data) {
+                        if (data.resp) {
+                            venta.factura.cotizacion_id = data.cotizacion.id;
+                            venta.factura.cotizacion_numero = data.cotizacion.numero;
+                        } else {
+                            fnToast(data.error, 3);
+                        }
+                        $('#id-display-actualizacion').hide();
+                    }).fail(function (jqXHR, textStatus) {
+                        $('#id-display-actualizacion').hide();
+                        fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                    }).always(function () {
+                        console.log("complete");
+                    });
+                }
+                return true;
+            },
+            enviar_cantidad: function (item) {
+                $('#id-mensaje-producto').html('');
+                $('#id-mensaje-display').html('');
+                $.ajax({
+                    async: false,
+                    url: '/inventario/ajax/punto-venta/consultar/',
+                    data: {
+                        accion: 'p-buscar-rango',
+                        productoid: item.productoid,
+                        codigo: item.codigo,
+                        factor: item.factor,
+                        cantidad: item.cantidad,
+                        cantidad_cotiza: item.cantidad,
+                        precio_lista: venta.factura.cliente.precio_lista ? 1 : 0,
+                        precio_activo: venta.factura.cliente.precio_activo,
+                        balanza: item.balanza,
+                        bodegaid: venta.factura.bodegaid,
+                        sucursalid: venta.factura.sucursalid,
+                        controla_stock: venta.factura.controla_stock
+                    },
+                    beforeSend: function () {
+                    },
+                    method: 'GET',
+                    dataType: 'json',
+                }).done(function (data) {
+                    if (data.resp) {
+                        let producto = data.producto;
+                        producto.codigo = item.codigo;
+                        producto.precio = Number(producto.precio);
+                        producto.precio_factor = Number(producto.precio_factor);
+                        producto.precio_final = Number(producto.precio_final);
+                        producto.cantidad = item.cantidad;
+                        let nitem = venta.editar(producto);
+                        venta.actualizar();
+                        if (nitem != null) {
+                            nitem.accion = 'edit';
+                            venta.cotizacion_add(nitem);
+                        }
+                    } else {
+                        venta.actualizar();
+                        fnToast(data.error, 3);
+                    }
+                    $('#id-input-codigo-barra').val('').focus();
+
+                }).fail(function (jqXHR, textStatus) {
+                    fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                    venta.actualizar();
+                }).always(function () {
+                    console.log("complete");
+                });
+            },
+            get_validar_excede_cupo: function () {
+                if (['CRE'].indexOf(this.factura.formapago) != -1) {
+                    if (this.get_cupo_disponible() < 0) {
+                        return true;
+                    }
+                } else {
+                    this.factura.cliente.disponible = Math.round((this.factura.cliente.cupo - this.factura.cliente.saldo) * 100) / 100;
+                }
+                return false;
+            },
+            get_cupo_disponible: function () {
+                this.factura.cliente.disponible = Math.round((this.factura.cliente.cupo - (this.factura.total + this.factura.cliente.saldo)) * 100) / 100;
+                return Number(this.factura.cliente.disponible);
+            },
+            get_mayor_decimal_cinco: function (valor) {
+                let decimal = (valor - parseInt(valor, 10)) * 100;
+                decimal = Math.round((decimal - parseInt(decimal, 10)) * 100) / 100;
+                return decimal > Number('0.5') ? true : false;
+            },
+            set_scroll_end: function () {
+                let scroll = $('#id-contenedor-detalle-venta');
+                scroll.animate({scrollTop: scroll.prop("scrollHeight")});
+            },
+            render_precios: function (template, componente, producto) {
+                var tmpl = $.templates(template); // Get compiled template
+                var html = tmpl.render(producto);      // Render template using data - as HTML string
+                $(componente).html(html);
+            },
+            reset_precios: function () {
+                $('#id-producto-descripcion').text("");
+                $('#id-precio-producto').text("0.00");
+                $('#id-codigo-barra').val("");
+                $('#id-codigo-producto').val("");
+                $('#id-nombre').val("");
+                $('#id-descripcion').val("");
+                $('#id-stock-sistema').val("");
+                $('#id-input-consultar-precio').val("").focus();
+                $('#id-consulta-producto-nombre').val("");
+                $('#id-precios-empaques tbody').text("");
+                $('#id-existencias-producto tbody').text("");
+                $('#id-tipo-consulta').prop('checked', false);
+                $('#id-consultar-barra').removeAttr('style');
+                $('#id-consultar-nombre').attr('style', 'display:none;');
+            }
+        };
+        const cliente_final = venta.factura.cliente;
+        const fecha_actual = venta.factura.fecha;
+    </script>
+{% endblock %}

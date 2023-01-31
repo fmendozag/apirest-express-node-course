@@ -1,0 +1,602 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+
+{% block main %}
+    <div class="container-fluid" style="margin-top: 2.6rem">
+        <div class="row">
+            <div class="col-lg-12">
+                <nav id="siteBreadcrumb" aria-label="breadcrumb">
+                    <ol class="breadcrumb p-2">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/informe/arqueo-caja">Informe arqueo caja</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col ">
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <form id="id-form-buscar" action="" method="GET">
+                            {% csrf_token %}
+                            <div class="form-row align-items-center">
+                                <div class="col-xs-2 col-">
+                                    <button class="btn btn-secondary btn-sm p-1">
+                                        <i class="fa fa-list-alt"></i>
+                                    </button>
+                                </div>
+                                <div class="col-md-1 col-5 mt-1">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="inicio" id="id-date-inicio" value="{{ inicio }}"
+                                               class="form-control date-piker"
+                                               aria-describedby="inputGroup-sizing-sm"
+                                               placeholder="Fecha inicial" autocomplete="off">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" id="inputGroup-sizing-sm">
+                                                <i class="fa fa-calendar"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-1 col-5 mt-1">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="final" id="id-date-final" value="{{ final }}"
+                                               class="form-control date-piker"
+                                               aria-describedby="inputGroup-sizing-sm"
+                                               placeholder="Fecha final" autocomplete="off">
+                                        <div class="input-group-append">
+                                                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                                                        <i class="fa fa-calendar"></i>
+                                                    </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md input-group col-md-2 mt-1 input-group-sm">
+                                    <input type="text" name="s" value="{{ s }}" class="form-control"
+                                           placeholder="Buscar por cartilla o documento.">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                               <div class="col-md input-group input-group-sm col-md-3 mt-1">
+                                    <select id="id-select-bancos" name="bancoid" class="custom-select">
+                                        <option value="">Bancos</option>
+                                        {% for b in bancos %}
+                                            <option value="{{ b.id }}"
+                                                    {% if bancoid == b.id %}selected{% endif %}>{{ b }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md input-group input-group-sm col-md-1 mt-1">
+                                    <select id="id-select-usuario" name="usuarioid" class="custom-select">
+                                        <option value="">Usuarios</option>
+                                        {% for u in usuarios %}
+                                            <option value="{{ u.username }}"
+                                                    {% if usuarioid == u.username %}selected{% endif %}>{{ u.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md input-group input-group-sm col-md-1 mt-1">
+                                    <select id="id-select-division" name="divisionid" class="custom-select">
+                                        <option value="">Divisiones</option>
+                                        {% for d in divisiones %}
+                                            <option value="{{ d.id }}"
+                                                    {% if divisionid == d.id %}selected{% endif %}>{{ d }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md-1 col mt-1">
+                                    <button id="id-btn-fecha-submit" class="btn btn-sm btn-primary btn-block small">
+                                        Consultar <i class="fa fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-body table-responsive p-0">
+                        <table id="id-tabla-matriculados"
+                               class="table table-striped table-bordered table-sm sm-0 dataTable no-footer m-0"
+                               role="grid">
+                            <thead class="text-center text-sm-center thead-light">
+                            <tr role="row">
+                                <th colspan="5">
+                                </th>
+                                <th class="text-right"><b>Pagos: </b></th>
+                                <th class="text-left">
+                                    <h4 class="m-0">
+                                        <span class="badge badge-primary">{{ page_obj.paginator.count }}</span>
+                                    </h4>
+                                </th>
+                                <th class="text-right"><b>Total: </b></th>
+                                <th>
+                                    <h4 class="m-0">
+                                        <span class="badge badge-primary">${{ total|floatformat:2|intcomma }}</span>
+                                    </h4>
+                                </th>
+                                <th>
+                                    <div class="btn-group" role="group" aria-label="Basic example">
+                                        <button rel="imprimir" data-toggle="tooltip" title="Imprimir PDF"
+                                                data-tipo="PDF" class="btn btn-info btn-sm">
+                                            <i class="fa fa-print"></i>
+                                        </button>
+                                        <!--button rel="imprimir" data-toggle="tooltip" title="Informe Matriculados" data-tipo="EXCEL" class="btn btn-primary btn-sm">
+                                            <i class="fa fa-file-excel"></i>
+                                        </button-->
+                                        <button rel="imprimir" data-toggle="tooltip" title="Matriz MTN"
+                                                data-tipo="EXCEL-MTN" class="btn btn-success btn-sm">
+                                            <i class="fa fa-file-excel"></i>
+                                        </button>
+
+                                    </div>
+                                </th>
+                            </tr>
+                            <tr role="row" class="small">
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Documento</th>
+                                <th>Cartilla</th>
+                                <th>Cliente</th>
+                                <th>Recibo</th>
+                                <th>Zona</th>
+                                <th>Pago</th>
+                                <th>CreadoPor</th>
+                                <th>Creadodate</th>
+                            </tr>
+                            </thead>
+                            <tbody class="table-sm small">
+                            {% for p in pagos %}
+                                <tr>
+                                    <td align="center">
+                                        <h6><span class="badge badge-secondary">{{ p.fecha|date:"d/m/Y" }}</span></h6>
+                                    </td>
+                                    <td align="center">{{ p.tipo }}</td>
+                                    <td align="center">{{ p.documento }}</td>
+                                    <td align="center">
+                                        <h6><span class="badge badge-primary">{{ p.cartilla|default_if_none:" " }}</span></h6>
+                                    </td>
+                                    <td>{{ p.detalle|default_if_none:" " }}</td>
+                                    <td>{{ p.recibo|default_if_none:" " }}</td>
+                                    <td align="center">
+                                        <h6><span class="badge badge-warning">{{ p.zona|default_if_none:" "}}</span></h6>
+                                    </td>
+                                    <td align="right"><b>${{ p.valor|floatformat:2|intcomma }}</b></td>
+                                    <td>{{ p.creadopor }}</td>
+                                    <td align="center"><span class="badge badge-secondary">{{ p.creadodate}}</span></td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="10">
+                                        No se encontró registros..
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if is_paginated %}
+                        <div class="card-footer">
+                            <nav aria-label="Demo of disable class">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a href="?page={{ page_obj.previous_page_number }}{{ url }}"
+                                               class="page-link">&laquo; Atrás</a>
+                                        </li>
+
+                                        <li class="page-item">
+                                            <a href="?page=1" class="page-link">Inicio</a>
+                                        </li>
+
+                                    {% else %}
+                                        <li class="page-item disabled" style="pointer-events:none">
+                                            <a class="page-link">&laquo; Atrás</a>
+                                        </li>
+                                        <li class="page-item disabled" style="pointer-events:none">
+                                            <a href="#" class="page-link">Inicio</a>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for i in paginator.page_range %}
+                                        {% if i <= page_obj.number|add:2 and i >= page_obj.number|add:-2 %}
+                                            {% if page_obj.number == i %}
+                                                <li class="page-item active" style="pointer-events:none">
+                                                    <a href="#" class="page-link">{{ forloop.counter }}</a>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item">
+                                                    <a href="?page={{ forloop.counter }}{{ url }}"
+                                                       class="page-link">{{ forloop.counter }}</a>
+                                                </li>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a href="?page={{ page_obj.paginator.num_pages }}{{ url }}"
+                                               class="page-link">Final</a>
+                                        </li>
+
+                                        <li class="page-item">
+                                            <a href="?page={{ page_obj.next_page_number }}{{ url }}"
+                                               class="page-link">Siguiente &raquo;</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled" style="pointer-events:none">
+                                            <a href="#" class="page-link">Final</a>
+                                        </li>
+                                        <li class="page-item disabled" style="pointer-events:none">
+                                            <a class="page-link">Siguiente &raquo;</a>
+                                        </li>
+                                    {% endif %}
+
+                                </ul>
+                            </nav>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade bd-example-modal-lg" id="id-modal-cliente" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="id-form-modal-factura">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitle">Filtros</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="id-alert-error" class="alert alert-danger alert-dismissible fade show d-none"
+                             role="alert">
+                            <b id="id-mensaje-error"></b>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-2 mb-2 d-none d-sm-block">
+                                <div class="input-group" style="display: none">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-qrcode"></i>
+                                    </span>
+                                    </div>
+                                    <input type="text" id="id-cod-vendedor" data-name="Vendedor" maxlength="15"
+                                           class="form-control cod-emp" placeholder="Cod. Vendedor"
+                                           readonly>
+                                </div>
+                                <label>Vendedor</label>
+                            </div>
+                            <div class="col-md input-group mb-2">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-user-circle"></i>
+                                    </span>
+                                    </div>
+                                    <input id="id-vendedor" type="hidden" name="" class="form-control">
+                                    <input id="id-emp-vendedor" type="text" name="vendedor" class="form-control"
+                                           maxlength="50" placeholder="Buscar vendedor por descripción">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-search"></i>
+                                    </span>
+                                        <button id="borra-vendedor" type="button"
+                                                class="d-none d-sm-block input-group-text btn-danger" title="Borrar">
+                                            <i class="fa fa-eraser"></i>
+                                        </button>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-2 mb-2 d-none d-sm-block">
+                                <div class="input-group" style="display: none">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-qrcode"></i>
+                                    </span>
+                                    </div>
+                                    <input type="text" id="id-cod-verificador" data-name="Verificador" maxlength="15"
+                                           class="form-control cod-emp" placeholder="Cod. Verificador"
+                                           readonly>
+                                </div>
+                                <label>Verificador</label>
+                            </div>
+                            <div class="col-md input-group mb-2">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-user-circle"></i>
+                                    </span>
+                                    </div>
+                                    <input id="id-verificador" type="hidden" name="" class="form-control">
+                                    <input id="id-emp-verificador" type="text" name="verificador" class="form-control"
+                                           maxlength="50" placeholder="Buscar verificador por descripción">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-search"></i>
+                                    </span>
+                                        <button id="borra-verificador" type="button"
+                                                class="d-none d-sm-block input-group-text btn-danger" title="Borrar">
+                                            <i class="fa fa-eraser"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-2 mb-2 d-none d-sm-block">
+                                <div class="input-group" style="display: none">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-qrcode"></i>
+                                    </span>
+                                    </div>
+                                    <input type="text" id="id-cod-recaudador" data-name="Recaudador" maxlength="15"
+                                           class="form-control cod-emp" placeholder="Cod. Recaudador"
+                                           readonly>
+                                </div>
+                                <label>Recaudador</label>
+                            </div>
+                            <div class="col-md input-group mb-2">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-user-circle"></i>
+                                    </span>
+                                    </div>
+                                    <input id="id-recaudador" type="hidden" name="" class="form-control">
+                                    <input id="id-emp-recaudador" type="text" name="recaudador" class="form-control"
+                                           maxlength="50" placeholder="Buscar recaudador por descripción">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-search"></i>
+                                    </span>
+                                        <button id="borra-recaudador" type="button"
+                                                class="d-none d-sm-block input-group-text btn-danger" title="Borrar">
+                                            <i class="fa fa-eraser"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-2 mb-2 d-none d-sm-block">
+                                <div class="input-group" style="display: none">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-user-circle"></i>
+                                    </span>
+                                    </div>
+                                    <input type="text" id="id-cod-entregador" data-name="Entregador" maxlength="15"
+                                           class="form-control cod-emp" placeholder="Cod. Entregador"
+                                           readonly>
+                                </div>
+                                <label>Entregador</label>
+                            </div>
+                            <div class="col-md input-group mb-2">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-user-circle"></i>
+                                    </span>
+                                    </div>
+                                    <input id="id-entregador" type="hidden" name="" class="form-control">
+                                    <input id="id-emp-entregador" type="text" name="entregador" class="form-control"
+                                           maxlength="50" placeholder="Buscar entregador por descripción">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-search"></i>
+                                    </span>
+                                        <button id="borra-entregador" type="button"
+                                                class="d-none d-sm-block input-group-text btn-danger" title="Borrar">
+                                            <i class="fa fa-eraser"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="form-row">
+                            <div class="col-md-2 mb-2 d-none d-sm-block">
+                                <div class="input-group" style="display: none">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-qrcode"></i>
+                                    </span>
+                                    </div>
+                                    <input type="text" id="id-cod-cliente" data-name="Cliente" maxlength="15"
+                                           class="form-control cod-cli" placeholder="Cod. Cliente"
+                                           readonly>
+                                </div>
+                                <label>Cliente</label>
+                            </div>
+                            <div class="col-md input-group mb-2">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-user"></i>
+                                    </span>
+                                    </div>
+                                    <input id="id-cliente" type="hidden" name="" class="form-control">
+                                    <input id="id-cli-cliente" type="text" name="cliente" class="form-control"
+                                           maxlength="50" placeholder="Buscar cliente por descripción">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-search"></i>
+                                    </span>
+                                        <button id="borra-cliente" type="button"
+                                                class="d-none d-sm-block input-group-text btn-danger" title="Borrar">
+                                            <i class="fa fa-eraser"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="form-row">
+                            <div class="col-md-1 mb-1 d-none">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-qrcode"></i>
+                                    </span>
+                                    </div>
+                                    <input type="hidden" id="id-zonaid" name="zonaid" required>
+                                    <input type="text" id="id-cod-zona" maxlength="15"
+                                           class="form-control" placeholder="Cod. Zona"
+                                           required>
+                                    <div class="input-group-prepend">
+                                        <button id="id-btn-send-cod-zona" class="input-group-text">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 mb-2 d-none d-sm-block">
+                                <label>Zona</label>
+                            </div>
+                            <div class="col-md mb-2">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-map-marker"></i>
+                                    </span>
+                                    </div>
+                                    <input type="text" id="id-nombre-zona" name="zona" class="form-control"
+                                           maxlength="50" placeholder="Buscar Zona" required>
+                                    <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-search"></i>
+                                    </span>
+                                        <button id="borra-zona" type="button"
+                                                class="d-none d-sm-block input-group-text btn-danger" title="Borrar">
+                                            <i class="fa fa-eraser"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 col-12">
+                                <select id="id-dias-cobro" name="dia" class="custom-select"
+                                        required>
+                                    <option value="">Seleccione dia</option>
+                                    <option value="1">LUNES</option>
+                                    <option value="2">MARTES</option>
+                                    <option value="3">MIERCOLES</option>
+                                    <option value="4">JUEVES</option>
+                                    <option value="5">VIERNES</option>
+                                    <option value="6">SABADO</option>
+                                    <option value="7">DOMINGO</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="id-confiltro" class="btn btn-primary" data-dismiss="modal">
+                            <i class="fa fa-filter"></i> Filtrar
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="fa fa-window-close"></i> Cerrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+    <!-Modal detalles documento-->
+    <div class="modal fade bd-example-modal-lg" id="id-modal-documento" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="id-form-modal-factura">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="id-titulo-modal">Detalles Factura</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body ">
+                        <div class="card-body p-0 table-responsive" style="border-radius: 5px">
+                            <table id="id-table-detalles" class="table table-striped table-hover">
+                                <thead class="bg-dark text-white text-center text-sm-center">
+                                <tr>
+                                    <th class="d-none d-sm-table-cell">Codigo</th>
+                                    <th>Nombre</th>
+                                    <th class="d-none d-sm-table-cell">Emp.</th>
+                                    <th class="d-none d-sm-table-cell">Cant.</th>
+                                    <th class="d-none d-sm-table-cell">Precio</th>
+                                    <th>Total</th>
+                                </tr>
+                                </thead>
+                                <tbody id="detalleDocumento" class="table-sm">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer p-0 bg-dark" style="border-radius: 5px">
+                            <div class="row px-3 py-2 font-weight-bold">
+                                <div class="col-md-12 col-12">
+                                    <div id="id-total-total" class="h5 text-right" style="color: #33FF33">
+                                        $0.00
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="fa fa-window-close"></i> Cerrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block footer %}
+    <footer class="navbar navbar-expand-lg navbar-dark fixed-bottom bg-dark p-2">
+        <div class="container" id="id-foot-menu" style="color: #01ff70">
+            <div class="col-md-6 col-6 h5">
+                Pagos: <b id="id-ventas-cantidad">{{ page_obj.paginator.count }}</b>
+            </div>
+            <div class="col-md-6 col-6 text-right h5">
+                Total: <b id="id-total-ventas">${{ total|floatformat:2|intcomma }}</b>
+            </div>
+        </div>
+    </footer>
+{% endblock %}
+
+{% block jscript %}
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+
+            $('.date-piker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoHide: true,
+                language: 'es-ES',
+                zIndex: 2048
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,181 @@
+﻿{% extends "informe/base.html" %}
+{% load humanize %}
+{% block headcss %}
+    <style xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+        @page {
+            size: A4 portrait;
+            margin-left: 1cm;
+            margin-right: 1cm;
+            margin-top: 3cm;
+            margin-bottom: 1cm;
+
+            @frame header {
+            -pdf-frame-content: page-header;
+            margin-top: 1cm;
+            margin-right: 1cm;
+            margin-bottom: 0cm;
+            margin-left: 1cm;
+        }
+        @frame footer {
+        -pdf-frame-content:page-footer;
+        bottom: 0cm;
+        margin-left: 1cm;
+        margin-right: 1cm;
+        height: 1cm;
+        }
+        }
+
+        .ctable {
+            width: 100%;
+            margin-top: 5px;
+            font-size: 11px;
+        }
+
+        .ctable tr {
+            padding-top: 3px;
+            padding-left: 1px;
+            padding-right: 1px;
+            padding-bottom: 0px;
+        }
+
+        .ctable th {
+            vertical-align: middle;
+            font-size: 10px;
+        }
+
+        .ctable td {
+            vertical-align: middle;
+        }
+    </style>
+{% endblock %}
+{% block header %}
+    <div id="page-header">
+        <table class="table" style="width: 100%">
+            <thead>
+            <tr>
+                <th colspan="10" align="right"><span style="font-size: 7px">Generado: {{ hoy|date:"d-m-Y H:i:s" }} :: Usuario: {{ usuario }}</span></th>
+            </tr>
+            <tr>
+                <th colspan="4" align="left">
+                    <img src="/static/img/logo/logo-350px.png" height="90">
+                </th>
+                <th colspan="6" align="right">
+                    <img src="/static/img/logo/logo-informe-cabecera.png" height="90">
+                </th>
+            </tr>
+            <tr>
+                <th></th>
+                <th colspan="8">
+                    <b style="font-size: 14pt">{{ transferencia.division|upper }}</b></br>
+                </th>
+                <th></th>
+            </tr>
+             <tr>
+                <th></th>
+                <th colspan="8">
+                    <b style="font-size: 14pt">{{ belbry|upper }}</b></br>
+                </th>
+                <th></th>
+            </tr>
+            </thead>
+        </table>
+    </div>
+{% endblock %}
+{% block main %}
+    <div align="center">
+        <br>
+        <b style="font-size: 12pt">Comprobante de Transferencia</b><br>
+        <b style="font-size: 11px">N°. {{ transferencia.numero }}</b><br>
+        <b style="font-size: 10px">{{ transferencia.get_estado_display }}</b>
+    </div>
+    <br>
+    <table class="ctable" style="border: 0.6px solid #1a1a1a">
+        <tr>
+            <td bgcolor="#eee"><b>BOD.ORIGEN</b></td>
+            <td>{{ transferencia.bodega_origen.nombre }} </td>
+            <td width="60" align="right"><b>FECHA</b></td>
+            <td>{{ transferencia.fecha|date:"d/m/Y" }} </td>
+        </tr>
+        <tr>
+            <td width="250" ><b>BOD.DESTINO</b></td>
+            <td colspan="3">{{ transferencia.bodega_destino.nombre }} </td>
+        </tr>
+        <tr>
+            <td width="60"><b>DETALLE</b></td>
+            <td colspan="3">{{ transferencia.detalle|default_if_none:" " }} </td>
+        </tr>
+
+    </table>
+    <br>
+    <table class="ctable" style="border: 0.6px solid #1a1a1a">
+        <thead>
+        <tr>
+            <th bgcolor="#eee" align="center" colspan="8">DETALLE DE TRANSFERENCIA</th>
+        </tr>
+        <tr>
+            <th bgcolor="#eee">Código</th>
+            <th>Cant.</th>
+            <th>Emp.</th>
+            <th width="280">Producto</th>
+            <th>Costo U.</th>
+            <th>Unds.</th>
+            <th>StockAct.</th>
+            <th>Total</th>
+        </tr>
+        </thead>
+        <tbody style="font-size: 10px">
+        {% for t in transferencia.invtransferenciasdt_set.all %}
+            <tr>
+                <td width="38" align="center">{{ t.producto.codigo }}</td>
+                <td  width="32" align="right">{{ t.cantidad|floatformat:2|intcomma }}</td>
+                <td  width="22" align="center">{{ t.empaque }}</td>
+                <td>{{ t.producto.nombre }} <span style="font-size: 8px">({{ t.producto.descripcion }})</span></td>
+                <td  width="42" align="right">{{ t.costo|floatformat:2|intcomma }}</td>
+                <td  width="42" align="right">{{ t.get_producto_unidades }}</td>
+                <td  width="42" align="right">{{ t.get_producto_stock|floatformat:2|intcomma }}</td>
+                <td  width="42" align="right">{{ t.total|floatformat:2|intcomma }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="8"></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="ctable" style="border: 0.6px solid #1a1a1a">
+        <tr >
+            <td colspan="4"><br><br><br></td>
+            <td style="font-size: 20px" align="center">Total: </td>
+            <td style="font-size: 20px" align="center">$ {{ transferencia.total|floatformat:2|intcomma }}</td>
+        </tr>
+    </table>
+    <br>
+    <label><b>Registros: </b></label>
+    <span style="">{{ transferencia.invtransferenciasdt_set.all.count }}</span>
+    <br><br>
+    <table class="ctable" style="border: 0.6px solid #1a1a1a">
+        <tr>
+            <td bgcolor="#eee" align="center"><b>Elaborado Por</b></td>
+            <td bgcolor="#eee" align="center"><b>Revisado Por</b></td>
+            <td bgcolor="#eee" align="center"><b>Aprobado Por</b></td>
+        </tr>
+
+    </table>
+    <br><br><br>
+    <table>
+        <tr>
+            <td align="center"><b>____________________</b></td>
+            <td align="center"><b>____________________</b></td>
+            <td align="center"><b>____________________</b></td>
+        </tr>
+    </table>
+
+{% endblock %}
+{% block footer %}
+    <div id="page-footer" style="text-align: center">
+        Pág.
+        <pdf:pagenumber> de
+            <pdf:pagecount>
+    </div>
+{% endblock %}

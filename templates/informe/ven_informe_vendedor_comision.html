@@ -1,0 +1,239 @@
+{% extends "informe/base.html" %}
+{% load humanize %}
+{% block headcss %}
+    <style xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+        @page {
+            size: A4 landscape;
+            margin-left: 1cm;
+            margin-right: 1cm;
+            margin-top: 3cm;
+            margin-bottom: 1cm;
+
+            @frame header {
+            -pdf-frame-content: page-header;
+            margin-top: 0.5cm;
+            margin-right: 1cm;
+            margin-bottom: 0cm;
+            margin-left: 1cm;
+        }
+
+        @frame footer {
+        -pdf-frame-content:page-footer;
+        bottom: 0cm;
+        margin-left: 1cm;
+        margin-right: 1cm;
+        height: 1cm;
+        }
+        }
+
+        .ctable {
+            width: 100%;
+            margin-top: 0px;
+            font-size: 11px;
+        }
+
+        .ctable tr {
+            padding-top: 3px;
+            padding-left: 1px;
+            padding-right: 1px;
+            padding-bottom: 0px;
+        }
+
+        .ctable th {
+            vertical-align: middle;
+            font-size: 9px;
+        }
+
+        .ctable td {
+            vertical-align: middle;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+    <div id="page-header">
+        <table class="table" style="width: 100%">
+            <thead>
+            <tr>
+                <th></th>
+                <th colspan="8">
+                    <b style="font-size: 10pt">SUPERMERDOS BELBRY</b></br>
+                    <span>Fecha de corte: </span> {{ comision.fecha|date:"d/m/Y" }}
+                </th>
+                <th>
+                </th>
+            </tr>
+            </thead>
+        </table>
+        <br>
+        <div align="center">
+            <b>INFORME DE COMISIONES POR CARTILLAS</b>
+        </div>
+    </div>
+{% endblock %}
+{% block main %}
+    <table class="ctable" style="border: 0.5px solid #1a1a1a;font-size: 9px;width: 50%">
+        <thead>
+        <tr>
+            <th colspan="3">VENTAS</th>
+            <th colspan="4">LIQUIDACIÓN</th>
+        </tr>
+        <tr>
+            <th width="50">C.Pendientes</th>
+            <th width="50">V.Nuevas</th>
+            <th width="50">Total</th>
+
+            <th width="50">C.Parcial</th>
+            <th width="50">C.Total</th>
+            <th width="50">C.Pendiente</th>
+            <th width="50">C.Supervisión</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td align="center">{{ comision.comision_pendiente|floatformat:0|intcomma }} </td>
+            <td align="center">{{ comision.ventas_nuevas|floatformat:0|intcomma }} </td>
+            <td align="center">{{ comision.comision_totales|floatformat:0|intcomma }} </td>
+            <td align="center">{{ comision.liquidacion_parcial|floatformat:0|intcomma }} </td>
+            <td align="center">{{ comision.liquidacion_total|floatformat:0|intcomma }} </td>
+            <td align="center">{{ comision.liquidacion_pendiente|floatformat:0|intcomma }} </td>
+            <td align="center">{{ comision.liquidacion_supervicion|floatformat:0|intcomma }} </td>
+        </tr>
+        </tbody>
+    </table>
+    <br>
+    <table class="ctable" style="border: 0.5px solid #1a1a1a;font-size: 9px">
+        <thead>
+        <tr>
+            <td colspan="15" bgcolor="#eee" align="center">
+                <b>DETALLE DE COMISIONES PAGADAS DENTRO DEL CORTE : {{ comision.fecha|date:"d/m/Y" }}</b>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="15" bgcolor="#eee">
+                <b>VENDEDOR : </b>{{ comision.vendedor.nombre }}
+            </td>
+        </tr>
+        <tr>
+            <th bgcolor="#eee" width="20">#</th>
+            <th width="32">Cartilla</th>
+            <th width="158">Cliente</th>
+            <th width="45">Telefono</th>
+            <th>Fecha</th>
+            <th>Dias</th>
+            <th>Tipo</th>
+            <th>V.Credito</th>
+            <th>V.Abonos</th>
+            <th>Abonos</th>
+            <th>Saldo</th>
+            <th>C.Venta</th>
+            <th>C.Sugerido</th>
+            <th>%</th>
+            <th>Estado</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for c in comision.venliquidacioncomisiondetalle_set.all %}
+            <tr>
+                <td align="center" width="20">{{ forloop.counter }} </td>
+                <td align="center" width="32">{{ c.numcartilla }} </td>
+                <td width="158">{{ c.cliente.nombre }} </td>
+                <td width="45">{{ c.cliente.telefono1 }} </td>
+                <td align="center">{{ c.fecha|date:"d/m/Y" }} </td>
+                <td align="center">{{ c.dias }} </td>
+                <td align="center">{% if c.factura.contado %}CONTADO{% else %}CREDITO{% endif %} </td>
+                <td align="center">{{ c.valor_credito|floatformat:2|intcomma }} </td>
+                <td align="center">{{ c.valor_abono|floatformat:2|intcomma }} </td>
+                <td align="center">{{ c.abonos }} </td>
+                <td align="center">{{ c.saldo|floatformat:2|intcomma }} </td>
+                <td align="center">{{ c.valor_comision|floatformat:2|intcomma }} </td>
+                <td align="center">{{ c.valor_pago|floatformat:2|intcomma }} </td>
+                <td align="center">{{ c.porcentaje|floatformat:0|intcomma }} </td>
+                <td align="center">{{ c.get_estado_display }} </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="15"> No se encontró registros..</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+        <tr>
+            <th colspan="12" align="right">Total a Pagar</th>
+            <th>
+                <span style="font-size: 11px;font-weight: bolder">{{ comision.total|floatformat:2|intcomma }}</span>
+            </th>
+            <th> </th>
+            <th> </th>
+        </tr>
+        </tfoot>
+    </table>
+    <br>
+    <br>
+    <table class="ctable" style="border: 0.5px solid #1a1a1a;font-size: 9px">
+        <thead>
+        <tr>
+            <td colspan="12" bgcolor="#eee" align="center">
+                <b>DETALLE DE COMISIONES PENDIENTES : {{ comision.fecha|date:"d/m/Y" }}</b>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="12" bgcolor="#eee">
+                <b>VENDEDOR : </b>{{ comision.vendedor.nombre }}
+            </td>
+        </tr>
+        <tr>
+            <th bgcolor="#eee" width="20">#</th>
+            <th width="32">Cartilla</th>
+            <th width="158">Cliente</th>
+            <th width="140">Telefono</th>
+            <th>Fecha</th>
+            <th>Dias</th>
+            <th>Tipo</th>
+            <th>V.Credito</th>
+            <th>V.Abonos</th>
+            <th>Abonos</th>
+            <th>Saldo</th>
+            <th>Estado</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for p in pendientes %}
+            <tr>
+                <td align="center" width="20">{{ forloop.counter }}</td>
+                <td align="center" width="32">{{ p.numcartilla }}</td>
+                <td width="158">{{ p.cliente }}</td>
+                <td width="45">{{ p.telefono }}</td>
+                <td align="center">{{ p.fecha|date:"d/m/Y" }}</td>
+                <td align="center">{{ p.dias }}</td>
+                <td align="center">{% if p.contado %}CONTADO{% else %}CREDITO{% endif %}</td>
+                <td align="center">{{ p.valor_credito|floatformat:2|intcomma }}</td>
+                <td align="center">{{ p.valor_abonos|floatformat:2|intcomma }}</td>
+                <td align="center">{{ p.abonos }}</td>
+                <td align="center">{{ p.saldo|floatformat:2|intcomma }}</td>
+                <td align="center">PENDIENTE</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="8"> No se encontró registros..</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+        <tr>
+            <th colspan="10" align="right">Total pendientes</th>
+            <th>
+                <span style="font-size: 11px;font-weight: bolder">{{ total_pendiente|floatformat:2|intcomma }}</span>
+            </th>
+            <th> </th>
+        </tr>
+        </tfoot>
+    </table>
+{% endblock %}
+{% block footer %}
+    <div id="page-footer" style="text-align: center">
+        Pág.
+        <pdf:pagenumber> de
+            <pdf:pagecount>
+    </div>
+{% endblock %}

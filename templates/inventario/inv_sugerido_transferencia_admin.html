@@ -1,0 +1,1081 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block headcss %}
+    <link rel="stylesheet" href="/static/css/select2.min.css">
+    <link rel="stylesheet" href="/static/css/select2-bootstrap4.min.css">
+    <link rel="stylesheet" href="/static/css/pos.css">
+    <style>
+        input[type=checkbox] {
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+
+{% block main %}
+    <div class="container-fluid" style="margin-top: 2.6rem">
+        <div class="row">
+            <div class="col-lg-12">
+                <nav id="siteBreadcrumb" aria-label="breadcrumb">
+                    <ol class="breadcrumb p-2">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/inventario/sugerido/transferencia">Sugerido Transferencia</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        <div class="row">
+            <article class="col">
+                <div class="card mb-5">
+                    <div class="card-header">
+                        <form id="id-form-transferencia-sugeridos">
+                            <div class="form-row">
+                                <input type="hidden" name="accion" value="inv-transferencia-sugerido">
+                                <input type="hidden" id="id-producto-id" name="producto_id" value="">
+
+                                <div class="form-group col-md-2">
+                                    <label>
+                                        Bodega Origen
+                                    </label>
+                                    <div class="input-group">
+                                        <select class="custom-select" name="bodega_origen_id" id="bodega-origen-id">
+                                            <option value="">---------</option>
+                                            {% for b in bodegas %}
+                                                <option value="{{ b.id }}">{{ b }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group col-md-3">
+                                    <label>
+                                        Sugerido Sucursal
+                                    </label>
+                                    <div class="input-group">
+                                        <select class="custom-select select-trans" name="sucursal_id"id="id-sucursal">
+                                            <option value="">---------</option>
+                                            {% for s in sucursales %}
+                                                <option value="{{ s.codigo }}">{{ s }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group col-md-1">
+                                    <label>
+                                        Promedio Venta
+                                    </label>
+                                    <div class="input-group">
+                                        <select class="custom-select" name="promedio_venta_id" id="id-promedio-venta">
+                                            <option value="5">---------</option>
+                                            {% for p in promedios %}
+                                                <option value="{{ p }}">{{ p }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group col-md-1">
+                                    <label>
+                                        <input type="checkbox" id="id-chk-con-dias" name="con_dias"
+                                               title="Habilitar días a transferir" readonly> Días
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" name="dias" id="id-dia-transferir" class="form-control text-center" disabled value="0">
+                                    </div>
+                                </div>
+
+                                <div class="form-group col-md-2">
+                                    <label>
+                                        <input type="checkbox" id="id-chk-con-rango-fechas" name="con_rango_fecha"
+                                               checked title="Habilitar rango de fechas" readonly> Fecha Inicio
+                                    </label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-calendar"></i>
+                                        </span>
+                                        </div>
+                                        <input type="text" name="fecha_inicio" id="id-fecha-inicio"
+                                               value="{{ hoy|date:"Y-m-d" }}"
+                                               class="form-control date-piker" data-toggle="datepicker" disabled>
+                                    </div>
+                                </div>
+
+                                <div class="form-group col-md-2">
+                                    <label>
+                                        Fecha Fin
+                                    </label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-calendar"></i>
+                                        </span>
+                                        </div>
+                                        <input type="text" name="fecha_final" id="id-fecha-final"
+                                               value="{{ hoy|date:"Y-m-d" }}"
+                                               class="form-control date-piker"
+                                               data-toggle="datepicker"
+                                               disabled
+                                        >
+                                    </div>
+                                </div>
+
+                                <div class="form-group col-md-1">
+                                    <label>
+                                        Acciones
+                                    </label>
+                                    <div class="btn-group" role="group">
+                                        <button id="id-btn-consultar-submit" data-toggle="tooltip" title=""
+                                                class="btn btn-primary">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                        <button type="button" id="id-btn-agregar-producto" data-toggle="tooltip"
+                                                data-placement="bottom"
+                                                title="Agregar producto."
+                                                class="btn btn-success">
+                                            <i class="fa fa-plus-circle"></i>
+                                        </button>
+                                        <button type="reset" id="id-remove-fechas" data-toggle="tooltip"
+                                                title="Restablecer"
+                                                class="btn btn-info">
+                                            <i class="fa fa-arrow-circle-left"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="form-row">
+
+                            <div class="form-group col-md-10"> </div>
+
+                            <div class="form-group col-md-2">
+                                <div class="lower p-1 m-0 text-center" style="border: 4px solid #545b62;background: #000">
+                                        <div class="m-0 text-center">
+                                            <span class="h5"
+                                                  style="color: #01ff70;font-family:sans-serif;font-weight: bolder"
+                                                  id="id-display-total">
+                                                $0.00
+                                            </span>
+                                            <span class="ml-4 text-right" style="font-size: 10px;color: #01ff70">
+                                                Items: <b id="id-display-items">0</b>
+                                            </span>
+                                        </div>
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body table-responsive p-0" id="id-contenedor-detalle-sugeridos"
+                         style="max-height: 66vh; overflow: auto;width: 100%">
+                        <table id="id-tabla-detalle-productos-sugeridos"
+                               class="table table-striped table-bordered table-sm sm-0 dataTable no-footer m-0"
+                               role="grid">
+                            <thead class="text-center text-sm-center thead-light small">
+                            <tr role="row">
+                                <th>Cód.</th>
+                                <th>Producto</th>
+                                <th>Formato</th>
+                                <th>T.Und</th>
+                                <th>P.Venta</th>
+                                <th>Stock.Suc</th>
+                                <th>C.Und</th>
+                                <th>C.Cja</th>
+                                <th>Cant.</th>
+                                <th>Emp.</th>
+                                <th>Sugerido</th>
+                                <th>Stk.Origen(Und)</th>
+                                <th>Total</th>
+                                <th>
+                                    <input type="checkbox" id="id-checkbox-all">
+                                </th>
+                                <th>..</th>
+                            </tr>
+                            </thead>
+                            <tbody class="small">
+                            </tbody>
+                            <tfoot class="table-primary small">
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="card-footer">
+                        <div class="fa-pull-right">
+                            <button type="button" onclick="window.location='/'" class="btn btn-secondary">
+                                <i class="fa fa-arrow-left"></i>
+                                Cancelar
+                            </button>
+                            <button id="id-btn-guardar-sugerido" class="btn btn-success">
+                                <i class="fa fa-save"></i>
+                                Guardar Transferencia
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <div class="modal fade" id="id-modal-buscar-productos" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header table-secondary">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="id-input-buscar-producto"
+                               aria-label="Text input with segmented dropdown button" placeholder="Buscar producto.."
+                               autocomplete="off">
+                        <div class="input-group-append">
+                        <span class="input-group-text" id="basic-addon1">
+                            <i class="fa fa-search"></i>
+                        </span>
+                        </div>
+                    </div>
+                    <button type="button" class="close" aria-label="Close" data-dismiss="modal" onfocus="">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body table-responsive p-0">
+                    <table id="id-table-buscar-filtro"
+                           class="table table-hover table-striped table-sm tb-head-fixed m-0">
+                        <thead class="text-center text-sm-center thead-light small">
+                        <tr>
+                            <!--th width="106">Cod.</th-->
+                            <th width="32">..</th>
+                            <th width="30">Cod.</th>
+                            <th width="180">Nombre</th>
+                            <th width="35">Formato</th>
+                            <th width="50">P.Unt.</th>
+                            <th width="50">P.Doc.</th>
+                            <th width="50">P.Cja</th>
+                            <th width="50">Stock</th>
+                        </tr>
+                        </thead>
+                        <tbody style="font-size: 14px">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        <i class="fa fa-arrow-left"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade bd-example-modal-lg" id="id-modal-confirmar-guardar-sugeridos" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="id-form-modal-guardar-sugerido">
+                    <input type="hidden" id="id-accion-imprimir" value="1">
+                    <div class="modal-header bg-gradient-success p-2">
+                        <h5 class="modal-title text-white" id="exampleModalLongTitle">
+                           <i class="fa fa-laptop"></i> Sugerido de Transferencia <b id="sugerido_transferencia_id"></b>
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body table-responsive p-0" style="max-height: 40vh; overflow: auto;width: 100%">
+                        <table id="id-modal-tabla-productos-sugeridos"
+                               class="table table-striped table-bordered table-sm sm-0 dataTable no-footer m-0"
+                               role="grid">
+                            <thead class="text-center text-sm-center thead-light small">
+                            <tr role="row">
+                                <th>Cód.</th>
+                                <th>Producto</th>
+                                <th>Format</th>
+                                <th>Stock</th>
+                                <th>Csto.</th>
+                                <th>Cant.</th>
+                                <th>Emp.</th>
+                                <th>Unds.</th>
+                                <th>Total</th>
+                            </tr>
+                            </thead>
+                            <tbody class="small">
+
+                            </tbody>
+                            <tfoot class="table-primary small">
+                            </tfoot>
+                        </table>
+
+                    </div>
+                    <div class="modal-footer">
+                        <div class="col-md text-right">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                <i class="fa fa-window-close"></i> Cancelar
+                            </button>
+                            <button id="id-btn-modal-guardar-sugerido" class="btn btn-success">
+                                <i class="fa fa-save"></i> Guardar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block footer %}
+    <script id="js-template-detalle-sugeridos" type="text/x-jsrender">
+[%* window.x = 1%]
+[%for items%]
+   <tr>
+        <td class="align-middle">
+           <b>[%:codigo%]</b>
+           <input type="hidden" data-item='{"producto_id":"[%:producto_id%]","codigo":"[%:codigo%]","empaque":"[%:empaque%]","empaque_id":"[%:empaque_id%]"}'>
+        </td>
+        <td class="align-middle [%if stock_borigen <= 0 %]text-danger[%/if%]">
+          <b>[%:nombre%]</b>
+        </td>
+        <td class="d-none d-sm-table-cell align-middle">[%:presentacion%]</td>
+        <td align="right" class="table-success align-middle"><b title="Unidades">[%:unidades%]</b></td>
+        <td align="right" class="table-success align-middle"><b title="Promedio de ventas">[%:promedio_ventas%]</b></td>
+        <td align="right" class="table-success align-middle"><b title="Stock">[%:stock%]</b></td>
+        <td align="right" class="table-success align-middle"><b title="Costo unidad">[%:costo%]</b></td>
+        <td align="right" class="table-success align-middle"><b title="Costo caja">[%:costo_caja%]</b></td>
+        <td align="center" class="table-warning align-middle">
+           <input type="text" placeholder='0.00' style="font-size: 11px;font-weight: bold;color: #000;width: 3rem" title="Cantidad sugerida"
+               class="form-control form-control-sm small text-right bg-white text-bold m-0 cantidad next"
+               value="[%:cantidad%]" onkeypress="return numerico(event);"/>
+        </td>
+        <td align="center" class="table-warning align-middle">
+           <select class="next" rel="select-empaque" data-load="0" title="Empaque" style="width: 3rem">
+                <option value="[%:empaque%]" data-opjson='{"empaque_id":"[%:empaque_id%]","empaque":"[%:empaque%]","factor":"[%:factor%]","empaque_codigo":"[%:empaque_codigo%]"}' selected>[%:empaque%]</option>
+           </select>
+        </td>
+        <td align="right" class="table-warning align-middle"><b title="Sugerido">[%:sugerido%]</b></td>
+        <td align="right" class="[%if stock_borigen <= 0 %]text-danger[%/if%] table-warning align-middle"><b title="Stock B.Origen">[%:stock_borigen%]</b></td>
+        <td align="center" class="align-middle">
+            <input type="text" placeholder='0.00' style="font-size: 11px;font-weight: bold;color: #000;width: 5rem" title="Total"
+               class="form-control form-control-sm small text-right bg-white text-bold m-0 total"
+               value="[%:total%]" readonly/>
+        </td>
+        <td align="center" class="align-middle">
+         [%if stock_borigen <= 0 %]<b>--</b>[%else%]<input type="checkbox">[%/if%]
+        </td>
+        <td align="center" class="align-middle">
+          <button type="button" rel="delete-item" class="btn btn-danger btn-sm m-0 p-1" data-toggle="tooltip" title="Eliminar Item">
+            <i class="fa fa-minus-circle"></i>
+          </button>
+        </td>
+    </tr>
+  [%/for%]
+
+    </script>
+    <script id="js-template-producto-sugerido-item" type="text/x-jsrender">
+   <tr>
+        <td class="align-middle">
+           <b>[%:codigo%]</b>
+           <input type="hidden" data-item='{"producto_id":"[%:producto_id%]","codigo":"[%:codigo%]","empaque":"[%:empaque%]","empaque_id":"[%:empaque_id%]"}'>
+        </td>
+        <td class="[%if stock_borigen <= 0 %]text-danger[%/if%] align-middle">
+          <b>[%:nombre%]</b>
+        </td>
+        <td class="d-none d-sm-table-cell align-middle">[%:presentacion%]</td>
+        <td align="right" class="table-success align-middle"><b title="Unidades">[%:unidades%]</b></td>
+        <td align="right" class="table-success align-middle"><b title="Promedio de ventas">[%:promedio_ventas%]</b></td>
+        <td align="right" class="table-success align-middle"><b title="Stock">[%:stock%]</b></td>
+        <td align="right" class="table-success align-middle"><b title="Costo compra">[%:costo%]</b></td>
+        <td align="right" class="table-success align-middle"><b title="Costo caja">[%:costo_caja%]</b></td>
+        <td align="center" class="table-warning align-middle">
+           <input type="text" placeholder='0.00' style="font-size: 11px;font-weight: bold;color: #000;width: 3rem" title="Cantidad sugerida"
+               class="form-control form-control-sm small text-right bg-white text-bold m-0 cantidad next"
+               value="[%:cantidad%]" onkeypress="return numerico(event);"/>
+        </td>
+        <td align="center" class="table-warning align-middle">
+           <select class="next" rel="select-empaque" data-load="0" title="Empaque" style="width: 3rem">
+                <option value="[%:empaque%]" data-opjson='{"empaque_id":"[%:empaque_id%]","empaque":"[%:empaque%]","factor":"[%:factor%]","empaque_codigo":"[%:empaque_codigo%]"}' selected>[%:empaque%]</option>
+           </select>
+        </td>
+        <td align="right" class="table-warning align-middle"><b title="Sugerido">[%:sugerido%]</b></td>
+        <td align="right" class="table-warning align-middle [%if stock_borigen <= 0 %]text-danger[%/if%]"><b title="Stock B.Origen">[%:stock_borigen%]</b></td>
+        <td align="center" class="align-middle">
+            <input type="text" placeholder='0.00' style="font-size: 11px;font-weight: bold;color: #000;width: 5rem" title="Total"
+               class="form-control form-control-sm small text-right bg-white text-bold m-0 total"
+               value="[%:total%]" readonly/>
+        </td>
+        <td align="center" class="align-middle">
+         [%if stock_borigen <= 0 %]<b>--</b>[%else%]<input type="checkbox">[%/if%]
+        </td>
+        <td align="center" class="align-middle">
+          <button type="button" rel="delete-item" class="btn btn-danger btn-sm m-0 p-1" data-toggle="tooltip" title="Eliminar Item">
+            <i class="fa fa-minus-circle"></i>
+          </button>
+        </td>
+    </tr>
+
+    </script>
+    <script id="js-template-detalle-filtro-buscar" type="text/x-jsrender">
+[%for productos%]
+   <tr data-json='{"productoid":"[%:productoid%]","codigo":"[%:codigo%]","pund":"[%:precio_und%]","pcja":"[%:precio_cja%]","stock":"[%:stock%]"}'>
+    <td width="32" align="center" class="align-middle">
+      <button type="button" data-json='{"productoid":"[%:productoid%]","codigo":"[%:codigo%]"}' class="btn btn-success btn-sm m-0 seleccionar" tabindex="0" data-toggle="tooltip" title="Seleccionar" >
+          <i class="fa fa-check-circle"></i>
+        </button>
+    </td>
+    <td width="36" class="align-middle"><b>[%:codigo%]</b></td>
+    <td width="180" style="max-width: calc(200 * 1vw )" class="text-truncate align-middle" title="[%:nombre%]">[%:nombre%]</td>
+    <td width="35" align="center" class="text-truncate align-middle">[%:formato%]</td>
+    <td width="50" align="right" class="align-middle">[%:precio_und%]</td>
+    <td width="50" align="right" class="align-middle">[%:precio_doc%]</td>
+    <td width="50" align="right" class="align-middle">[%:precio_cja%]</td>
+    <td width="50" align="right" class="align-middle"><b>[%:stock%]</b></td>
+    </tr>
+[%/for%]
+
+    </script>
+
+    <script id="js-template-items-sugeridos" type="text/x-jsrender">
+[%for items%]
+   <tr>
+        <td class="align-middle">
+           <b>[%:codigo%]</b>
+           <input type="hidden" data-item='{"producto_id":"[%:producto_id%]","codigo":"[%:codigo%]","empaque":"[%:empaque%]","empaque_id":"[%:empaque_id%]"}'>
+        </td>
+        <td class="align-middle">
+          <b>[%:nombre%]</b>
+        </td>
+        <td class="d-none d-sm-table-cell align-middle">[%:presentacion%]</td>
+        <td align="right" class="align-middle table-success">
+          <b>[%:stock.toFixed(2)%]</b>
+        </td>
+        <td align="right" class="align-middle table-success">
+          <b>[%:costo.toFixed(4)%]</b>
+        </td>
+        <td align="right" class="align-middle table-warning">
+          <b>[%:cantidad.toFixed(2)%]</b>
+        </td>
+        <td align="center" class="align-middle table-warning">
+          <b>[%:empaque%]</b>
+        </td>
+        <td align="center" class="align-middle table-warning">
+          <b>[%:unidades.toFixed(2)%]</b>
+        </td>
+        <td align="center" class="align-middle table-info">
+          <b>[%:total.toFixed(2)%]</b>
+        </td>
+    </tr>
+  [%/for%]
+
+    </script>
+{% endblock %}
+
+{% block js %}
+    <script src="/static/js/select2.min.js"></script>
+    <script src="/static/lib/jsrender.min.js"></script>
+    <script src="/static/lib/jquery.slimscroll.min.js"></script>
+    <script src="/static/js/validador.js"></script>
+{% endblock %}
+
+{% block jscript %}
+    <script>
+        $(function () {
+
+            $.views.settings.delimiters("[%", "%]");
+
+            $('[data-toggle="tooltip"]').tooltip();
+
+            $('.date-piker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoHide: true,
+                language: 'es-ES',
+                zIndex: 2048,
+                endDate: {{ hoy|date:"Y-m-d" }}
+            });
+
+            $('select.select2-design').each(function () {
+                $(this).select2({
+                    tags: "true",
+                    theme: 'bootstrap4',
+                    width: 'style',
+                    placeholder: 'Seleccione proveedor',
+                    allowClear: true
+                });
+            });
+
+            $('#id-btn-consultar-submit').on('click', function (e) {
+                modelo.add_producto = false;
+                modelo.sugerido.bodega_origen_id = $('#bodega-origen-id').val();
+                modelo.sugerido.sucursal_id = $('#id-sucursal').val();
+            });
+
+            $('#id-form-transferencia-sugeridos').on({
+                submit: function (e) {
+                    e.preventDefault();
+                    if (!modelo.add_producto) {
+                        $("#id-tabla-detalle-productos-sugeridos > tbody").html('');
+                        modelo.sugerido.items = [];
+                        $('#id-display-total').html('0.00');
+                        $('#id-display-items').html('0');
+                    }
+                    var frmData = new FormData($(this)[0]);
+                    $.ajax({
+                        url: '/inventario/sugerido/transferencia/',
+                        data: frmData,
+                        method: 'POST',
+                        dataType: 'json',
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    }).done(function (data) {
+                        $.views.settings.allowCode(true);
+                        if (data.resp === true) {
+                            if (modelo.add_producto) {
+                                modelo.add_producto = false;
+                                if (data.productos_sugeridos.length > 0) {
+                                    let json = data.productos_sugeridos.pop();
+                                    if (!modelo.existe_item(json)) {
+                                        modelo.sugerido.items.push(json);
+                                        modelo.render_producto_item(json);
+                                        modelo.set_scroll_end();
+                                        modelo.actualizar_calculos();
+                                    } else {
+                                        fnToast("El Producto seleccionado ya existe en la Lista de sugeridos.", 3);
+                                    }
+                                }
+                            } else {
+                                modelo.sugerido.items = data.productos_sugeridos;
+                                modelo.render_detalle();
+                                modelo.actualizar_calculos();
+                            }
+                        } else {
+                            fnToast(data.error, 3);
+                        }
+                    }).fail(function (jqXHR, textStatus) {
+                        fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                    });
+                }
+            });
+
+            $("#id-tabla-detalle-productos-sugeridos > tbody").on('change', 'select[rel="select-empaque"]', function (e) {
+                let element = $(this).parents('tr').find('input[type="hidden"]');
+                let cantidad = $(this).parents('tr').find('input.cantidad');
+                let json = element.data('item');
+                let opjson = $(this).find('option:selected').data('opjson');
+                if (!modelo.existe_item({producto_id: json.producto_id, empaque_id: opjson.empaque_id})) {
+                    json.empaque = $(this).val();
+                    json.factor = Number(opjson.factor);
+                    json.old_empaque_id = json.empaque_id;
+                    json.empaque_id = opjson.empaque_id;
+                    json.empaque_codigo = opjson.empaque_codigo;
+                    json.cantidad = Number(cantidad.val());
+
+                    if (modelo.empaque_selected(json)) {
+                        element.data('item', json);
+                        $(this).closest('td').next().find('input.next,select.next').focus();
+                    }
+
+                    let item = modelo.editar_cantidad(json);
+                    if (item != null) {
+                        element.closest('tr').find('input.total').val(item.total.toFixed(2));
+                        modelo.actualizar_calculos();
+                    }
+
+
+                }else{
+                    e.preventDefault();
+                    $(this).val(json.empaque);
+                    fnToast('Ya existe un producto con el empaque seleccionado..',3);
+                }
+            });
+
+            $("#id-tabla-detalle-productos-sugeridos > tbody").on('keyup', 'select[rel="select-empaque"]', function (e) {
+                let keyCode = (e.keyCode ? e.keyCode : e.which);
+                next_tabindex(keyCode, $(this));
+            });
+
+            $("#id-tabla-detalle-productos-sugeridos > tbody").on('keydown', 'select[rel="select-empaque"]', function (e) {
+                $(this).click();
+            });
+
+            $("#id-tabla-detalle-productos-sugeridos > tbody").on('click', 'select[rel="select-empaque"]', function (e) {
+                let load = Boolean($(this).data('load'));
+                if (!load) {
+                    let elemento = $(this);
+                    let item = elemento.parents('tr').find('input[type="hidden"]').data('item');
+                    item.accion = 'p-empaques';
+                    $.ajax({
+                        url: '/inventario/ajax/consultar/empaques',
+                        data: item,
+                        beforeSend: function () {
+                        },
+                        method: 'GET',
+                        dataType: 'json',
+                    }).done(function (data) {
+                        if (data.resp) {
+                            elemento.data('load', '1');
+                            $.each(data.empaques, function (i, v) {
+                                let option = $('<option>').data('opjson', v).val(v.empaque).text(v.empaque);
+                                elemento.append(option);
+                            });
+                        }
+                    }).fail(function (jqXHR, textStatus) {
+                        console.log('Problemas de conexion con el servidor: ' + textStatus);
+                    }).always(function () {
+                        console.log("complete");
+                    });
+                }
+            });
+
+            $('#id-btn-agregar-producto').on('click', function (e) {
+                let id_bodega_origen = $("#bodega-origen-id").val();
+                if (id_bodega_origen === ""){
+                    fnToast('Debe seleccionar una bodega de origen para añadir los productos', 3);
+                    return;
+                }
+                $('#id-producto-id').val('');
+                $('#id-modal-buscar-productos').modal('show');
+                modelo.sugerido.bodega_origen_id = $('#bodega-origen-id').val();
+                modelo.sugerido.sucursal_id = $('#id-sucursal').val();
+            });
+
+            $('#id-table-buscar-filtro tbody').slimscroll({
+                height: '200px',
+            });
+
+            $('#id-input-buscar-producto').on('keyup', function (e) {
+                e.preventDefault();
+                $.ajax({
+                    url: '/inventario/ajax/consultar/productos/',
+                    data: {
+                        accion: 'p-buscar-productos',
+                        criterio: $(this).val()
+                    },
+                    beforeSend: function () {
+                    },
+                    method: 'GET',
+                    dataType: 'json',
+                }).done(function (data) {
+                    if (data.resp) {
+                        $.views.settings.allowCode(true);
+                        var tmpl = $.templates("#js-template-detalle-filtro-buscar");
+                        var html = tmpl.render(data);      // Render template using data - as HTML string
+                        $("#id-table-buscar-filtro tbody").html(html);
+                    }
+                }).fail(function (jqXHR, textStatus) {
+                    fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                }).always(function () {
+                    console.log("complete");
+                });
+            });
+
+            $('#id-table-buscar-filtro tbody').on('dblclick', 'tr', function (e) {
+                let json = $(this).data('json');
+                if (json.productoid != '') {
+                    modelo.add_producto = true;
+                    $('#id-producto-id').val(json.productoid);
+                    $('#id-form-transferencia-sugeridos').submit();
+                    $('#id-modal-buscar-productos').modal('hide');
+                }
+                $('#id-producto-id').val('');
+            });
+
+            $('#id-modal-buscar-productos').on('hidden.bs.modal', function (e) {
+                $('#id-producto-id').val('');
+            });
+
+            $('#id-table-buscar-filtro tbody').on('click', 'button.seleccionar', function (e) {
+                let json = $(this).data('json');
+                if (json.productoid != '') {
+                    modelo.add_producto = true;
+                    $('#id-producto-id').val(json.productoid);
+                    $('#id-form-transferencia-sugeridos').submit();
+                    $('#id-modal-buscar-productos').modal('hide');
+                }
+                $('#id-producto-id').val('');
+            });
+
+            $("#id-tabla-detalle-productos-sugeridos > tbody").on('change', 'input[type="checkbox"]', function (e) {
+                e.preventDefault();
+                let checked = this.checked;
+                let json = $(this).parents('tr').find('input[type="hidden"]').data('item');
+                json.procesar = checked;
+                if (modelo.checked_item(json)) {
+                    $(this).prop('checked', checked);
+                }
+                modelo.actualizar_calculos();
+            });
+
+            $("#id-checkbox-all").change(function (e) {
+                e.preventDefault();
+                let checked = this.checked;
+                $("#id-tabla-detalle-productos-sugeridos > tbody").find('input[type="checkbox"]').each(function () {
+                    let json = $(this).parents('tr').find('input[type="hidden"]').data('item');
+                    json.procesar = checked;
+                    if (modelo.checked_item(json)) {
+                        $(this).prop('checked', checked);
+                    }
+                });
+                modelo.actualizar_calculos();
+            });
+
+            $('#id-tabla-detalle-productos-sugeridos > tbody').on('change', 'input.cantidad', function (e) {
+                let element = $(this);
+                if (Number(element.val()) >= 0 && element.val().length) {
+                    let json = element.parents('tr').find('input[type="hidden"]').data('item');
+                    json.cantidad = Number(element.val());
+                    let item = modelo.editar_cantidad(json);
+                    if (item != null) {
+
+                        element.closest('tr').find('input.total').val(item.total.toFixed(2));
+                        modelo.actualizar_calculos();
+                    }
+                }
+            });
+
+            $('#id-tabla-detalle-productos-sugeridos > tbody').on('keydown', 'input.cantidad', function (e) {
+                let keyCode = (e.keyCode ? e.keyCode : e.which);
+                if (keyCode == 13) {
+                    let element = $(this);
+                    if (Number(element.val()) >= 0 && element.val().length) {
+                        let json = element.parents('tr').find('input[type="hidden"]').data('item');
+                        json.cantidad = Number(element.val());
+                        let item = modelo.editar_cantidad(json);
+                        if (item != null) {
+                            element.closest('tr').find('input.total').val(item.total.toFixed(2));
+                            modelo.actualizar_calculos();
+                        }
+                    }
+                }
+            });
+
+            $('#id-tabla-detalle-productos-sugeridos > tbody').on('keyup', 'input.cantidad', function (e) {
+                let keyCode = (e.keyCode ? e.keyCode : e.which);
+                next_tabindex(keyCode, $(this));
+            });
+
+            $('#id-tabla-detalle-productos-sugeridos > tbody').on('change', 'input[rel="accion-costo"]', function (e) {
+                let element = $(this);
+                if (Number(element.val()) >= 0 && element.val().length) {
+                    let json = element.parents('tr').find('input[type="hidden"]').data('item');
+                    json.costo = Number(element.val());
+                    let item = modelo.editar_costo(json);
+                    if (item != null) {
+                        element.closest('tr').find('input.total').val(item.total.toFixed(2));
+                        modelo.actualizar_calculos();
+                    }
+                }
+            });
+
+            $('#id-tabla-detalle-productos-sugeridos > tbody').on('keydown', 'input[rel="accion-costo"]', function (e) {
+                let keyCode = (e.keyCode ? e.keyCode : e.which);
+                if (keyCode == 13) {
+                    let element = $(this);
+                    if (Number(element.val()) >= 0 && element.val().length) {
+                        let json = element.parents('tr').find('input[type="hidden"]').data('item');
+                        json.costo = Number(element.val());
+                        let item = modelo.editar_costo(json);
+                        if (item != null) {
+                            element.closest('tr').find('input.total').val(item.total.toFixed(2));
+                            modelo.actualizar_calculos();
+                        }
+                    }
+                }
+            });
+
+            $('#id-tabla-detalle-productos-sugeridos > tbody').on('keyup', 'input[rel="accion-costo"]', function (e) {
+                let keyCode = (e.keyCode ? e.keyCode : e.which);
+                next_tabindex(keyCode, $(this));
+            });
+
+            $("#id-tabla-detalle-productos-sugeridos > tbody").on('click', 'button[rel="delete-item"]', function (e) {
+                e.preventDefault();
+                if (confirm("Confirme eliminar item!")) {
+                    let item = $(this).parents('tr').find('input[type="hidden"]').data('item');
+                    if (modelo.delete_item(item)) {
+                        $(this).closest('tr').remove();
+                        modelo.actualizar_calculos();
+                    }
+                }
+            });
+
+            $('#id-tabla-detalle-productos-sugeridos > tbody').on('focus', "input.next", function (e) {
+                $(this).select();
+            });
+
+            $('#id-btn-guardar-sugerido').on('click',function (e) {
+                e.preventDefault();
+                $('#sugerido_transferencia_id').text( $('#id_sucursal').children("option:selected").text());
+                {#modelo.sugerido.bodega_origen_id = $('#bodega-origen-id').val();#}
+                {#modelo.sugerido.sucursal_id = $('#id-sucursal').val();#}
+
+                let sugeridos = modelo.get_items_sugeridos();
+                if(sugeridos.items.length > 0){
+                    modelo.render_items_sugeridos(sugeridos);
+                    $('#id-modal-confirmar-guardar-sugeridos').modal('show');
+                }else{
+                    fnToast('No ha seleccionado ningun item..',3)
+                }
+            });
+
+            $('#id-form-modal-guardar-sugerido').on({
+               submit: function (e) {
+                   e.preventDefault();
+                   $('#id-btn-modal-guardar-sugerido').prop('disabled', true);
+
+                   $.ajax({
+                        url: '/inventario/sugerido/transferencia/',
+                        data: {
+                            accion: "generar-transferencia",
+                            transferencia: JSON.stringify(modelo.sugerido)
+                        },
+                        method: 'POST',
+                        dataType: 'json',
+                    }).done(function (data) {
+                        if (data.resp) {
+                            modelo.sugerido.items = modelo.sugerido.items.filter(sugerido => sugerido.procesar === false);
+                            modelo.render_detalle();
+                            {#modelo.actualizar_calculos();#}
+                            let sugeridos = modelo.get_items_sugeridos();
+                            modelo.render_items_sugeridos(sugeridos);
+                            modelo.actualizar_calculos();
+                            $('#id-btn-modal-guardar-sugerido').prop('disabled', true);
+                            $('#id-modal-confirmar-guardar-sugeridos').modal('hide');
+                        } else {
+                            fnToast(data.error, 3);
+                            $('#id-btn-modal-guardar-sugerido').prop('disabled', false);
+                        }
+                    }).fail(function (jqXHR, textStatus) {
+                        $('#id-btn-modal-guardar-sugerido').prop('disabled', false);
+                        fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                    }).always(function () {
+                        console.log("complete");
+                    });
+                }
+            });
+
+
+            $('#bodega-origen-id').on('change',function (){
+                if (modelo.sugerido.items.length>0){
+                    if(!confirm("Si cambia la bodega de origen, se eliminará el sugerido de transferencia !!")) {
+                        $('#bodega-origen-id').val(modelo.sugerido.bodega_origen_id);
+                        return;
+                    }
+                    modelo.resetForm();
+                    modelo.render_detalle();
+                    modelo.actualizar_calculos();
+                }
+            });
+
+            $('#id-sucursal').on('change',function (){
+                if (modelo.sugerido.items.length>0){
+                    if(!confirm("Si cambia la sucursal, se eliminará el sugerido de transferencia !!")) {
+                        $('#id-sucursal').val(modelo.sugerido.sucursal_id);
+                        return;
+                    }
+                    modelo.resetForm();
+                    modelo.render_detalle();
+                    modelo.actualizar_calculos();
+                }
+            });
+
+            $("#id-chk-con-dias").on('change', function (e) {
+                e.preventDefault();
+                let checked = this.checked;
+                if(checked) {
+                    $('#id-dia-transferir').removeAttr("disabled");
+                    $('#id-dia-transferir').val("1");
+                    $('#id-dia-transferir').focus();
+                } else {
+                    $('#id-dia-transferir').attr("disabled","disabled");
+                    $('#id-dia-transferir').val("0");
+                }
+                get_restar_fechas(Number($('#id-dia-transferir').val()));
+                $(this).prop('checked', checked);
+            });
+
+            $("#id-dia-transferir").on('change', function (e) {
+                let dias = $(this).val();
+                get_restar_fechas(dias);
+            });
+
+        });
+
+        get_restar_fechas = function (dias) {
+            let fecha_fin = new Date($('#id-fecha-final').val());
+            let fecha_inicio = new Date($('#id-fecha-final').val());
+            fecha_fin.setMinutes(fecha_fin.getMinutes() + fecha_fin.getTimezoneOffset())
+            fecha_inicio.setDate(fecha_fin.getDate() - Number(dias) );
+            let formatted_fecha = fecha_inicio.getFullYear() + "-" + (fecha_inicio.getMonth() + 1) + "-" + fecha_inicio.getDate();
+            $('#id-fecha-inicio').val(formatted_fecha);
+        };
+
+        next_tabindex = function (code, e) {
+            switch (code) {
+                case 13 :
+                    if (e.closest('td').next().find('input.next,select.next').length) {
+                        e.closest('td').next().find('input.next,select.next').focus();
+                    } else {
+                        e.closest('tr').next().find('input.next,select.next').first().focus();
+                    }
+                    break;
+                case 40:
+                    e.closest('tr').next().find('input.next,select.next').first().focus();
+                    break;
+                case 38:
+                    e.closest('tr').prev().find('input.next,select.next').first().focus();
+                    break;
+                case 39:
+                    if (e.closest('td').next().find('input.next,select.next').length) {
+                        e.closest('td').next().find('input.next,select.next').focus();
+                    } else {
+                        e.closest('tr').next().find('input.next,select.next').first().focus();
+                    }
+                    break;
+                case 37:
+                    if (e.closest('td').prev().find('input.next,select.next').length) {
+                        e.closest('td').prev().find('input.next,select.next').focus();
+                    } else {
+                        e.closest('tr').prev().find('input.next,select.next').first().focus();
+                    }
+            }
+        };
+
+        var modelo = {
+            sugerido: {
+                total: 0,
+                sucursal_id: '',
+                bodega_origen_id: '',
+                items: []
+            },
+            add_producto: false,
+            existe_item: function (json) {
+                for (let item of this.sugerido.items) {
+                    if (json.producto_id === item.producto_id && json.empaque_id === item.empaque_id) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+            render_detalle: function () {
+                let tmpl = $.templates("#js-template-detalle-sugeridos");
+                let html = tmpl.render(this.sugerido);
+                $("#id-tabla-detalle-productos-sugeridos > tbody").html(html);
+            },
+            render_producto_item: function (item) {
+                let tmpl = $.templates("#js-template-producto-sugerido-item");
+                let html = tmpl.render(item);
+                $("#id-tabla-detalle-productos-sugeridos > tbody").append(html);
+            },
+            empaque_selected: function (json) {
+                for (let item of this.sugerido.items) {
+                    if (json.producto_id === item.producto_id && item.empaque_id === json.old_empaque_id) {
+                        item.empaque = json.empaque;
+                        item.factor = json.factor;
+                        item.empaque_id = json.empaque_id;
+                        item.empaque_codigo = json.empaque_codigo;
+                        return true;
+                    }
+                }
+                return false;
+            },
+            checked_item: function (json) {
+                for (let item of this.sugerido.items) {
+                    if (item.producto_id == json.producto_id && item.empaque_id == json.empaque_id) {
+                        item.procesar = json.procesar;
+                        return true;
+                    }
+                }
+                return false;
+            },
+            editar_cantidad: function (json) {
+                for (let item of this.sugerido.items) {
+                    if (item.producto_id === json.producto_id && item.empaque_id === json.empaque_id) {
+                        item.cantidad = json.cantidad;
+                        item.total = Math.round(((item.cantidad*item.factor)  * item.costo) * 100) / 100;
+                        return item;
+                    }
+                }
+                return null;
+            },
+
+            editar_costo: function (json) {
+                for (let item of this.sugerido.items) {
+                    if (item.producto_id === json.producto_id && item.empaque_id === json.empaque_id) {
+                        item.costo = Number(json.costo);
+                        item.total = Math.round((item.cantidad * item.costo) * 100) / 100;
+                        return item;
+                    }
+                }
+                return null;
+            },
+            actualizar_calculos: function () {
+                let contador = 0;
+                this.sugerido.subtotal = 0;
+                this.sugerido.descuento = 0;
+                this.sugerido.impuesto = 0;
+                this.sugerido.total = 0;
+
+                for (let i in this.sugerido.items) {
+                    if (this.sugerido.items[i].procesar) {
+                        this.sugerido.items[i].cantidad = Number(this.sugerido.items[i].cantidad);
+                        this.sugerido.items[i].costo = Number(this.sugerido.items[i].costo);
+                        this.sugerido.items[i].factor = Number(this.sugerido.items[i].factor);
+                        this.sugerido.items[i].total = Number(this.sugerido.items[i].total);
+                        this.sugerido.total += Math.round( Number(this.sugerido.items[i].total * 100)) / 100;
+                        contador += 1;
+                    }
+                }
+                $('#id-display-items').html(contador);
+                $('#id-display-total').html(this.sugerido.total.toFixed(2));
+            },
+            set_scroll_end: function () {
+                let scroll = $('#id-contenedor-detalle-sugeridos');
+                scroll.animate({scrollTop: scroll.prop("scrollHeight")});
+            },
+            delete_item: function (item) {
+                for (let i in this.sugerido.items) {
+                    if (item.producto_id === this.sugerido.items[i].producto_id && item.empaque_id === this.sugerido.items[i].empaque_id) {
+                        this.sugerido.items.splice(i, 1);
+                        return true;
+                    }
+                }
+            },
+            get_items_sugeridos: function () {
+                let sugerido = new Object();
+                let item;
+                sugerido.subtotal = 0;
+                sugerido.descuento = 0;
+                sugerido.impuesto = 0;
+                sugerido.total = 0;
+                sugerido.items = [];
+
+                for (let i in this.sugerido.items) {
+                    if (this.sugerido.items[i].procesar && this.sugerido.items[i].cantidad > 0) {
+                        this.sugerido.items[i].stock = Math.round(Number(this.sugerido.items[i].stock) * 100)/100;
+                        this.sugerido.items[i].cantidad = Math.round(Number(this.sugerido.items[i].cantidad) * 100)/100;
+                        this.sugerido.items[i].costo = Math.round(Number(this.sugerido.items[i].costo) * 100)/100;
+                        this.sugerido.items[i].factor = Math.round(Number(this.sugerido.items[i].factor) * 100)/100;
+                        this.sugerido.items[i].total = Math.round(Number(this.sugerido.items[i].total) * 100)/100;
+                        item = this.sugerido.items[i];
+                        item.unidades = Math.round((item.factor * item.cantidad)*100)/100;
+                        sugerido.items.push(item);
+                        sugerido.total += Math.round(this.sugerido.items[i].total * 100) / 100;
+                    }
+                }
+                return sugerido;
+            },
+             render_items_sugeridos: function (sugerido) {
+                let tmpl = $.templates("#js-template-items-sugeridos");
+                let html = tmpl.render(sugerido);
+                $("#id-modal-tabla-productos-sugeridos > tbody").html(html);
+            },
+            resetForm: function () {
+                this.sugerido.items = [];
+                this.actualizar_calculos();
+                $('#bodega-origen-id').val("");
+                $('#id-sucursal').val("");
+                $('#id-promedio-venta').val("5");
+                modelo.sugerido.bodega_origen_id="";
+                modelo.sugerido.sucursal_id="";
+            },
+        }
+        const fecha_actual = $('#id-fecha-final').val();
+    </script>
+{% endblock %}

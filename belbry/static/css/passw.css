@@ -1,0 +1,33 @@
+.has-error{color:#ff0000 !important;}
+.has-success{color:#78b310 !important;}
+.has-error input{border:1px solid red !important;}
+.has-success input{border:1px solid #78b310 !important;}
+
+.message_success{background-color: #78b310; color:#fff;padding: 5px;}
+.message_error{background-color: #e74c3c; color:#fff;padding: 5px;}
+h1{font-family: Pacifico;}
+
+#pswd_info {
+    /* position: absolute; */
+    /* top: 250px; */
+    /* left: 15px; */
+    width: 100%;
+    padding: 15px;
+    background: #fefefe;
+    font-size: 10px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px #ccc;
+    border: 1px solid #ddd;
+}
+.valid {
+    background: url("../icons/true.png") no-repeat 0 50%;
+    padding-left: 22px;
+    line-height: 24px;
+    color: #3a7d34;
+}
+.invalid {
+    background: url("../icons/cerrar.png") no-repeat 0 50%;
+    padding-left: 22px;
+    line-height: 24px;
+    color: #ec3f41;
+}

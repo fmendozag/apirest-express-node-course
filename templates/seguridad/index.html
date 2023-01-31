@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+{% block main %}
+    <div id="wrapper">
+        <ul class="navbar-nav sidebar sidebar-dark accordion bg-gradient-success d-none d-sm-block pt-1"
+            style="margin-top: 2.4rem;background: #1aa26c" id="accordionSidebar">
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center"
+               href="/">
+                <img src="/static/img/logo/belbry.png" id="id-logo-solo" style="display: none" height="29">
+                <div class="sidebar-brand-text p-0">
+                    <img src="/static/img/logo/belbry.png">
+                </div>
+            </a>
+            <!-- Nav Item - Dashboard -->
+            {% if not persona.es_estudiante %}
+                <li class="nav-item active">
+                    <a class="nav-link" href="/seguridad/dashboard">
+                        <i class="fas fa-fw fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+            {% endif %}
+
+            <li class="nav-item active">
+                <a class="nav-link" href="/">
+                    <i class="fas fa-fw fa-home"></i>
+                    <span>Inicio</span>
+                </a>
+            </li>
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading text-white">
+                <span>Cuenta</span>
+            </div>
+
+            <li class="nav-item">
+                <a class="nav-link" href="/seguridad/cambiar/password/interno">
+                    <i class="fas fa-fw fa-lock"></i>
+                    <span>Cambiar contraseña</span>
+                </a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading text-white">
+                Servicios
+            </div>
+
+            <!-- Nav Item - Pages Collapse Menu -->
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading text-white">
+                Redes Sociales
+            </div>
+            <br>
+            <div class="m-1 text-center">
+                <a href="https://www.facebook.com/ISTVR/" target="_blank" class="btn btn-primary btn-circle mb-1">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="https://twitter.com/istvr_edu_ec" target="_blank" class="btn btn-info btn-circle mb-1">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="https://www.youtube.com/channel/UCETwbD54tQBqDi5sqXVbJQw" target="_blank" class="btn btn-danger btn-circle mb-1">
+                    <i class="fab fa-youtube"></i>
+                </a>
+                <a href="https://www.instagram.com/istvr_edu_ec/" target="_blank" class="btn btn-light btn-circle mb-1">
+                    <i class="fab fa-instagram"></i>
+                </a>
+
+            </div>
+            <br>
+            <hr class="sidebar-divider">
+            <!-- Nav Item - Pages Collapse Menu -->
+            <li class="nav-item">
+            </li>
+
+            <!-- Nav Item - Charts -->
+            <li class="nav-item">
+            </li>
+
+            <!-- Nav Item - Tables -->
+            <li class="nav-item">
+            </li>
+            <!-- Divider -->
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0 ml-1" id="sidebarToggle" onclick="$('#id-logo-solo').toggle();"></button>
+            </div>
+
+        </ul>
+        <!-- Begin Page Content -->
+        <div class="container-fluid mb-3" style="margin-top: 3.2rem">
+            <div class="row">
+                <!-- Area Chart -->
+                <div class="col-md">
+                    <div class="list-group filter-wrap">
+                        <article class="list-group-item p-0">
+                            {% for modulo_grupo in modulos_grupos %}
+                                <header class="filter-header card-header">
+                                    <a href="#" data-toggle="collapse"
+                                       data-target="#collap-{{ modulo_grupo.id }}"
+                                       aria-expanded="true" class="">
+                                        <i class="icon-action fa fa-chevron-down"></i>
+                                        <h6 class="title text-primary">
+                                            <i class="fa fa-bars"></i>
+                                            {{ modulo_grupo.nombre }} </h6>
+                                    </a>
+                                </header>
+                                <div class="filter-content collapse show p-2" id="collap-{{ modulo_grupo.id }}" style="background: #eeeeee;">
+                                    <div class="row">
+                                        {% for modulo in modulo_grupo.modulos_activos %}
+                                            {% if modulo.habilitado %}
+                                                <div class="col-6 col-sm-6 col-md-6 col-lg-2">
+                                                    <a href="{{ modulo.url }}">
+                                                        <figure class="card card-sm card-product text-center">
+                                                                <span class="mt-1 text-info" style="font-size: 13px;">
+                                                                 <em>{{ modulo.tipo }}</em>
+                                                                </span>
+                                                            <div class="p-1" style="height: 5rem">
+                                                                <img src="/static/img/menu/{{ modulo.icono }}"
+                                                                     height="60">
+                                                            </div>
+                                                            <div class="title mb-0 text-primary text-truncate">
+                                                                <b>{{ modulo.nombre }}</b>
+                                                            </div>
+                                                            <figcaption
+                                                                    class="info-wrap text-center text-dark bg-light"
+                                                                    style="height: 3rem;line-height: 12px;font-size: 11px;font-weight: bolder">
+
+                                                                <em>{{ modulo.descripcion }}</em>
+                                                            </figcaption>
+                                                        </figure>
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </article>
+                    </div>
+                     <br>
+                </div>
+            </div>
+            <!-- Content Row -->
+        </div>
+        <!-- /.container-fluid -->
+    </div>
+    <!-- Modal -->
+    <div class="modal fade bd-example-modal-lg" id="id-form-modal-mensaje" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalCenterTitle">Mensaje Académico.</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-success" role="alert">
+                        <h4 class="alert-heading" id="id-modal-titulo"></h4>
+                        <p id="id-modal-mensaje"></p>
+                        <hr>
+                        <p class="mb-0">Gracias por su atención.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-dismiss="modal">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block footer %}
+    <footer id="id-footer" class="navbar navbar-expand-lg navbar-dark fixed-bottom bg-dark-50">
+        <div class="container-fluid">
+            <div class="col-md" style="font-size: 12px">
+                <span class="text-white fa-pull-left">Copyright © 2020</span>
+                <span class="fa-pull-right">
+                    <a class="text-white" href="#"
+                       style="font-family:Arial; letter-spacing:4px">
+                        www.belbry.com.ec
+                    </a>
+                </span>
+            </div>
+        </div>
+    </footer>
+{% endblock %}
+{% block jscript %}
+    <script>
+        {% if messages %}
+            $(function () {
+                {% for message in messages %}
+                    {% if message.tags.lower == 'info' %}
+                        $('#id-modal-mensaje').html('{{ message }}');
+                        $('#id-form-modal-mensaje').modal('show');
+                    {% else %}
+                        fnToast("{{ message }}", 4);
+                    {% endif %}
+                {% endfor %}
+            });
+        {% endif %}
+    </script>
+{% endblock %}

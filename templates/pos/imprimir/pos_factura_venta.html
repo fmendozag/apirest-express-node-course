@@ -1,0 +1,292 @@
+{% load humanize %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        pre{
+            margin: 0;
+            padding: 0;
+        }
+        table tr,th,td{
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+{% for venta in ventas %}
+    <table>
+        <tr>
+            <td colspan="2">
+                <pre> </pre>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <pre> </pre>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <pre> </pre>
+            </td>
+        </tr>
+        <tr>
+            <th align="left"><pre>Cli:</pre></th>
+            <th align="left">
+                <pre>{{ venta.cliente.nombre.strip|truncatechars:41 }} </pre>
+            </th>
+        </tr>
+        <tr>
+            <th align="left"><pre>Dir:</pre></th>
+            <th align="left">
+                <pre>{{ venta.cliente.direccion.strip|truncatechars:41 }} </pre>
+            </th>
+        </tr>
+        <tr>
+            <th align="left"><pre>Ced:</pre></th>
+            <th align="left">
+                <pre>{{ venta.get_pv_cliente_ruc }}   {{ venta.fecha|date:"d-m-Y" }}  {{ venta.get_forma_pago }}</pre>
+            </th>
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <th align="left">
+                <pre>Cant. </pre>
+            </th>
+            <th>
+                <pre>Emp </pre>
+            </th>
+            <th>
+                <pre>Producto          </pre>
+            </th>
+            <th>
+                <pre>P.Unt  </pre>
+            </th>
+            <th>
+                <pre>Total</pre>
+            </th>
+        </tr>
+        <tr>
+            <th colspan="5" align="left">----------------------------------------</th>
+        </tr>
+    </table>
+    <table>
+        {% for item in venta.get_pv_venta_detalle %}
+            <tr>
+                <td>
+                    <pre>{{ item.get_pv_cantidad_str|slice:"0:5" }} </pre>
+                </td>
+                <td>
+                    <pre>{{ item.empaque|slice:"0:3" }} </pre>
+                </td>
+                <td>
+                    <pre>{{ item.get_pv_producto_str|slice:"0:16" }} </pre>
+                </td>
+                <td>
+                    <pre>{{ item.get_pv_precio_unitario_str|slice:"0:9" }} </pre>
+                </td>
+                <td>
+                    <pre>{{ item.get_pv_total_str|slice:"0:9" }}</pre>
+                </td>
+            </tr>
+        {% endfor %}
+
+        {% for i in venta.get_pv_restante_items %}
+            <tr>
+                <td colspan="5" align="left">
+                    <pre> </pre>
+                </td>
+            </tr>
+        {% endfor %}
+
+        <tr>
+            <td colspan="5" align="left">
+                <pre> </pre>
+            </td>
+        </tr>
+    </table>
+    <table>
+        <tfoot>
+        <tr>
+            <th colspan="4" align="left">----------------------------------------</th>
+        </tr>
+        <tr>
+            <td>
+                <pre>{{ venta.get_pv_count_items|stringformat:"02d" }} Items,    </pre>
+            </td>
+            <td>
+                <pre>SUBTOTAL      : </pre>
+            </td>
+            <td>
+                <pre>$ </pre>
+            </td>
+            <td>
+                <pre>{{ venta.get_pv_subtotal_str }}</pre>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <pre>{{ venta.id }}   </pre>
+            </td>
+            <td>
+                <pre>Tarifa  0.00 %: </pre>
+            </td>
+            <td>
+                <pre>$ </pre>
+            </td>
+            <td>
+                <pre>{{ venta.get_pv_tarifa_cero_str }}</pre>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <pre>{{ venta.get_pv_creadopor_str|truncatechars:12 }} </pre>
+            </td>
+            <td>
+                <pre>Tarifa 12.00 %: </pre>
+            </td>
+            <td>
+                <pre>$ </pre>
+            </td>
+            <td>
+                <pre>{{ venta.get_pv_tarifa_iva_str }}</pre>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <pre>{{ venta.get_pv_caja_cod_str|truncatechars:12 }} </pre>
+            </td>
+            <td>
+                <pre>12.00 % I.V.A : </pre>
+            </td>
+            <td>
+                <pre>$ </pre>
+            </td>
+            <td>
+                <pre>{{ venta.get_pv_impuesto_str }}</pre>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <pre>Hora: {{ venta.get_pv_hora_str }}  </pre>
+            </td>
+            <td>
+                <pre>TOTAL A PAGAR : </pre>
+            </td>
+            <td>
+                <pre>$ </pre>
+            </td>
+            <td>
+                <pre>{{ venta.get_pv_total_str }}</pre>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <pre> </pre>
+            </td>
+        </tr>
+        {% if not venta.contado %}
+             <tr>
+                <td colspan="4">
+                    <pre>******************************</pre>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <pre>*     FACTURA VENCE EL :  {{ venta.vence|date:"d-m-Y" }}     *</pre>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <pre>******************************</pre>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <pre> </pre>
+                </td>
+            </tr>
+        {% endif %}
+        {% if venta.descuento > 0 %}
+             <tr>
+                <td colspan="4">
+                    <pre>*   DESC. APLICAD FACTURA $ {{ venta.get_pv_descuento_str }}    *</pre>
+                </td>
+            </tr>
+        {% endif %}
+
+        <tr>
+            <td colspan="4">
+                <pre>***  {{ venta.get_pv_bodega_str|slice:"0:30" }}  ***</pre>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <pre> </pre>
+            </td>
+        </tr>
+        {% if venta.contado %}
+        <tr>
+            <td colspan="4">
+                <pre>Tot:{{ venta.get_pv_total_str }} Pag:{{ venta.get_pv_efectivo_str }} Camb:{{ venta.get_pv_cambio_str }}</pre>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <pre> </pre>
+            </td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td colspan="4">
+                <pre> </pre>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <pre> </pre>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <pre> </pre>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <pre> </pre>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <pre> </pre>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <pre> </pre>
+            </td>
+        </tr><tr>
+            <td colspan="4">
+                <pre> </pre>
+            </td>
+        </tr><tr>
+            <td colspan="4">
+                <pre> </pre>
+            </td>
+        </tr>
+        </tfoot>
+    </table>
+{% endfor %}
+<script>
+   window.print();
+   setTimeout(function () {
+       window.close()
+    }, 1000);
+</script>
+</body>
+</html>

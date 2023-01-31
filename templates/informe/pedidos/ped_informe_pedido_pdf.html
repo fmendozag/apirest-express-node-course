@@ -1,0 +1,193 @@
+{% extends "informe/base.html" %}
+{% load humanize %}
+{% block headcss %}
+    <style xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+        @page {
+            size: A4 portrait;
+            margin-left: 1cm;
+            margin-right: 1cm;
+            margin-top: 2.5cm;
+            margin-bottom: 1cm;
+
+            @frame header {
+            -pdf-frame-content: page-header;
+            margin-top: 1cm;
+            margin-right: 1cm;
+            margin-bottom: 0cm;
+            margin-left: 1cm;
+        }
+        @frame footer {
+        -pdf-frame-content:page-footer;
+        bottom: 0cm;
+        margin-left: 1cm;
+        margin-right: 1cm;
+        height: 1cm;
+        }
+        }
+
+        .ctable {
+            width: 100%;
+            margin-top: 5px;
+            font-size: 11px;
+        }
+
+        .ctable tr {
+            padding-top: 3px;
+            padding-left: 1px;
+            padding-right: 1px;
+            padding-bottom: 0px;
+        }
+
+        .ctable th {
+            vertical-align: middle;
+            font-size: 10px;
+        }
+
+        .ctable td {
+            vertical-align: middle;
+        }
+    </style>
+{% endblock %}
+{% block header %}
+    <div id="page-header">
+        <table class="table" style="width: 100%">
+            <thead>
+            <tr>
+                <th colspan="10" align="right"><span style="font-size: 7px">Generado: {{ hoy|date:"d-m-Y H:i:s" }} :: Usuario: {{ usuario }}</span></th>
+            </tr>
+            <tr>
+                <th colspan="4" align="left">
+                    <img src="/static/img/logo/logo-350px.png" height="90">
+                </th>
+                <th colspan="6" align="right">
+                    <img src="/static/img/logo/logo-informe-cabecera.png" height="90">
+                </th>
+            </tr>
+            <tr>
+                <th></th>
+                <th colspan="8">
+                    <b style="font-size: 14pt">{{ belbry|upper }}</b></br>
+                </th>
+                <th>
+                </th>
+            </tr>
+            </thead>
+        </table>
+    </div>
+{% endblock %}
+{% block main %}
+    <div align="center">
+        <br>
+        <b style="font-size: 12pt">ORDEN DE PEDIDO</b><br>
+        <b style="font-size: 11px">N°. {{ pedido.numero }}</b><br>
+        <b style="font-size: 10px">{{ pedido.get_estado_display }}</b>
+    </div>
+    <br>
+    <table class="ctable" style="border: 0.6px solid #1a1a1a">
+        <tr>
+            <th colspan="4" bgcolor="#eee">DATOS DEL CLIENTE</th>
+        </tr>
+        <tr>
+            <td width="60" align="right"><b>Fecha:</b></td>
+            <td>{{ pedido.fecha|date:"d/m/Y" }} </td>
+
+            <td width="60" align="right"><b>Vendedor:</b> </td>
+            <td>{{ pedido.cliente.vendedor }} </td>
+
+        </tr>
+        <tr>
+            <td width="60" align="right"><b>Cedula:</b></td>
+            <td>{{ pedido.ruc }} </td>
+
+            <td width="60" align="right"><b>Cliente:</b></td>
+            <td>{{ pedido.cliente }} </td>
+        </tr>
+        <tr>
+            <td width="60" align="right"><b>Direccion:</b></td>
+            <td colspan="3">{{ pedido.cliente.direccion|default_if_none:" " }} </td>
+        </tr>
+        <tr>
+            <td width="60" align="right"><b>Referencia:</b></td>
+            <td colspan="3">{{ pedido.cliente.referencia|default_if_none:" " }} </td>
+        </tr>
+        <tr>
+            <td width="60" align="right"><b>Telefono:</b></td>
+            <td>{{ pedido.cliente.telefono1|default_if_none:" " }} </td>
+            <td width="60" align="right"><b>CreadoPor:</b></td>
+            <td>{{ pedido.creadopor }} - {{ pedido.creadodate|date:"d/m/Y H:i:s" }} </td>
+        </tr>
+        <tr>
+            <td width="60" align="right"><b>AprobadoPor:</b></td>
+            <td>
+                {% if pedido.aprobadopor is not None %} {{ pedido.aprobadopor }} - {{ pedido.aprobadodate }}{% endif %}
+            </td>
+            <td width="60" align="right"><b>F.Entrega:</b></td>
+            <td>{{ pedido.entregado|date:"d/m/Y" }} </td>
+        </tr>
+    </table>
+    <br>
+    <table class="ctable" style="border: 0.6px solid #1a1a1a">
+        <thead>
+        <tr>
+            <th bgcolor="#eee" align="center" colspan="8">DETALLE ORDEN DE PEDIDO</th>
+        </tr>
+        <tr>
+            <th bgcolor="#eee" width="76">Cod.Barra</th>
+            <th width="20">Emp.</th>
+            <th width="230">Producto</th>
+            <th width="28">Cant.</th>
+            <th width="44">PVP.</th>
+            <th width="54">Subtotal</th>
+            <th width="54">Total</th>
+            <th>Est.</th>
+        </tr>
+        </thead>
+        <tbody style="font-size: 10px">
+        {% for d in pedido.venordenpedidosdetalle_set.all %}
+            <tr>
+                <td align="center">{{ d.codigo }}</td>
+                <td align="center">{{ d.empaque }}</td>
+                <td>{{ d.producto.nombre }} <span style="font-size: 8px">({{ d.producto.descripcion }})</span></td>
+                <td align="center">{{ d.cantidad }}</td>
+                <td align="right">{{ d.precio_display }}</td>
+                <td align="right">{{ d.subtotal|floatformat:2|intcomma }}</td>
+                <td align="right">{{ d.total|floatformat:2|intcomma }}</td>
+                <!--td align="center">{{ d.sugerido|floatformat:2|intcomma }}</td-->
+                <td align="center">{% if d.aprobado %}SI{% else %}NO{% endif %}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="8"></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+        <tr>
+            <th colspan="5"></th>
+            <th align="right" bgcolor="#eee">Subtotal:</th>
+            <th align="right">{{ pedido.subtotal|floatformat:2|intcomma }}</th>
+        </tr>
+        <tr>
+            <th colspan="5"></th>
+            <th align="right" bgcolor="#eee">Impuesto:</th>
+            <th align="right">{{ pedido.impuesto|floatformat:2|intcomma }}</th>
+        </tr>
+        <tr>
+            <th colspan="5"></th>
+            <th align="right" bgcolor="#eee">Total Pagar:</th>
+            <th align="right">{{ pedido.total|floatformat:2|intcomma }}</th>
+        </tr>
+        </tfoot>
+    </table>
+    <br>
+    <label>Observación:</label>
+    <span style="">{{ pedido.aprobadonota|default_if_none:"" }}</span>
+
+{% endblock %}
+{% block footer %}
+    <div id="page-footer" style="text-align: center">
+        Pág.
+        <pdf:pagenumber> de
+            <pdf:pagecount>
+    </div>
+{% endblock %}

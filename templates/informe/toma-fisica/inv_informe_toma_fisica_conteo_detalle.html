@@ -1,0 +1,169 @@
+{% extends "informe/base.html" %}
+{% load humanize %}
+{% block headcss %}
+    <style xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+        @page {
+            size: A4 portrait;
+            margin-left: 1cm;
+            margin-right: 1cm;
+            margin-top: 3.9cm;
+            margin-bottom: 1cm;
+
+            @frame header {
+            -pdf-frame-content: page-header;
+            margin-top: 1cm;
+            margin-right: 1cm;
+            margin-bottom: 0cm;
+            margin-left: 1cm;
+        }
+        @frame footer {
+        -pdf-frame-content:page-footer;
+        bottom: 0cm;
+        margin-left: 1cm;
+        margin-right: 1cm;
+        height: 1cm;
+        }
+        }
+
+        .ctable {
+            width: 100%;
+            margin-top: 5px;
+            font-size: 11px;
+        }
+
+        .ctable tr {
+            padding-top: 3px;
+            padding-left: 1px;
+            padding-right: 1px;
+            padding-bottom: 0px;
+        }
+
+        .ctable th {
+            vertical-align: middle;
+            font-size: 10px;
+        }
+
+        .ctable td {
+            vertical-align: middle;
+        }
+    </style>
+{% endblock %}
+{% block header %}
+    <div id="page-header">
+        <table class="table" style="width: 100%">
+            <thead>
+            <tr>
+                <th colspan="10" align="right"><span style="font-size: 7px">Generado: {{ hoy|date:"d-m-Y H:i:s" }} :: Usuario: {{ usuario }}</span></th>
+            </tr>
+            <tr>
+                <th colspan="4" align="left">
+                    <img src="/static/img/logo/logo-350px.png" height="90">
+                </th>
+                <th colspan="6" align="right">
+                    <img src="/static/img/logo/logo-informe-cabecera.png" height="90">
+                </th>
+            </tr>
+             <tr>
+                <th></th>
+                <th colspan="8">
+                    <b style="font-size: 12pt">{{ belbry|upper }}</b></br>
+                </th>
+                <th></th>
+            </tr>
+            </thead>
+        </table>
+        <div align="center">
+            <b style="font-size: 11pt"> CONTEO FÍSICO</b><br>
+            <b style="font-size: 10px">{{ toma_fisico.detalle}} ({{ toma_fisico.bodega.nombre}})</b><br>
+            <b style="font-size: 9px">{{ toma_fisico.get_estado_display }}</b>
+        </div>
+    </div>
+    <br>
+{% endblock %}
+{% block main %}
+    <table class="ctable" style="border: 0.6px solid #1a1a1a">
+        <tr>
+            <td bgcolor="#eee" width="100"><b>TOMA FÍSICO</b></td>
+            <td>{{ toma_fisico.bodega.nombre }} </td>
+            <td width="60" ><b>FECHA</b></td>
+            <td>{{ toma_fisico.fecha|date:"d/m/Y" }} </td>
+        </tr>
+
+        <tr>
+            <td width="60"><b>DETALLE</b></td>
+            <td colspan="3">{{ toma_fisico.detalle|default_if_none:" " }} </td>
+        </tr>
+    </table>
+    <br>
+
+    <table class="ctable" style="border: 0.6px solid #1a1a1a">
+        <thead>
+        <tr>
+            <th bgcolor="#eee" align="center" colspan="12">DETALLE DE CONTEO FÍSICO</th>
+        </tr>
+        <tr>
+            <td colspan="3"></td>
+            <td colspan="3" align="center"><b>Ingresado</b></td>
+            <td colspan="3" align="center"><b>Ajustado</b></td>
+            <td colspan="3" align="center"><b>Documento</b></td>
+        </tr>
+        <tr>
+            <th bgcolor="#eee" width="12">N°</th>
+            <th bgcolor="#eee" width="40">Código</th>
+            <th width="280">Producto</th>
+            <th width="30">Físico</th>
+            <th width="35">Sistema</th>
+            <th width="30">Dif</th>
+            <th width="30">Físico</th>
+            <th width="35">Sistema</th>
+            <th width="30">Dif</th>
+            <th width="30">Tipo</th>
+            <th width="20">I</th>
+            <th width="20">E</th>
+        </tr>
+        </thead>
+        <tbody style="font-size: 10px">
+        {% for t in productos_detalle %}
+            <tr>
+                <td width="12" align="center">{{ forloop.counter }}</td>
+                <td width="40" align="center">{{ t.codigo }}</td>
+                <td width="280">{{ t.producto.nombre }} <span style="font-size: 8px">({{ t.producto.descripcion }})</span></td>
+                <td width="30" align="right">{{ t.fisico_stock }}</td>
+                <td width="35" align="right">{{ t.stock_ant }}</td>
+                <td width="30" align="right">{{ t.diferencia_ant }}</td>
+                <td width="30" align="right">{{ t.fisico_stock }}</td>
+                <td width="35" align="right">{{ t.stock_sistema }}</td>
+                <td width="30" align="right">{{ t.diferencia_sistema }}</td>
+                <td width="20" align="center">{% if t.transferencia %}T{% else %}A{%endif %}</td>
+                <td width="20" align="center">{% if t.ingreso %}x{% endif %}</td>
+                <td width="20" align="center">{% if t.egreso %}x{% endif %}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="12"> </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <table class="ctable" style="border: 0.6px solid #1a1a1a">
+        <tr>
+            <td bgcolor="#eee" align="center"><b>Elaborado Por</b></td>
+            <td bgcolor="#eee" align="center"><b>Revisado Por</b></td>
+            <td bgcolor="#eee" align="center"><b>Aprobado Por</b></td>
+        </tr>
+        <tr>
+            <td align="center"><br><br><br>____________________</td>
+            <td align="center"><br><br><br>___________________</td>
+            <td align="center"><br><br><br>____________________</td>
+        </tr>
+    </table>
+
+{% endblock %}
+{% block footer %}
+    <div id="page-footer" style="text-align: center">
+        Pág.
+        <pdf:pagenumber> de
+            <pdf:pagecount>
+    </div>
+{% endblock %}

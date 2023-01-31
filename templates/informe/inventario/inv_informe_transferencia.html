@@ -1,0 +1,383 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+
+{% block main %}
+    <div class="container-fluid" style="margin-top: 2.6rem">
+        <div class="row">
+            <div class="col-lg-12">
+                <nav id="siteBreadcrumb" aria-label="breadcrumb">
+                    <ol class="breadcrumb p-2">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/informe/transferencia_inventario/">Transferencia Inventario</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <form id="id-form-buscar" action="" method="GET">
+                            {% csrf_token %}
+                            <input type="hidden" value="{{ estado_transferencia }}" id="id-estado-transferencia" name="estado_transferencia">
+
+                            <div class="form-row align-items-center">
+                                <div class="col-md-1 col-5 mt-1">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="inicio" id="id-date-inicio" value="{{ inicio }}"
+                                               class="form-control date-piker"
+                                               aria-describedby="inputGroup-sizing-sm"
+                                               placeholder="Fecha inicial" autocomplete="off">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" id="inputGroup-sizing-sm">
+                                                <i class="fa fa-calendar"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-1 col-5 mt-1">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="final" id="id-date-final" value="{{ final }}"
+                                               class="form-control date-piker"
+                                               aria-describedby="inputGroup-sizing-sm"
+                                               placeholder="Fecha final" autocomplete="off">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text" id="inputGroup-sizing-sm">
+                                                <i class="fa fa-calendar"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md input-group col-md-2 mt-1 input-group-sm">
+                                    <input type="text" name="s" value="{{ s }}" class="form-control"
+                                           placeholder="Buscar Documento.">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="col-md input-group input-group-sm col-md-1 mt-1">
+                                    <select id="id-select-usuarios" name="creadopor" class="custom-select">
+                                        <option value="">Usuario</option>
+                                        {% for u in usuarios %}
+                                            <option value="{{ u.username }}">{{ u.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md input-group input-group-sm col-md-1 mt-1">
+                                    <select id="id-select-division" name="divisionid" class="custom-select">
+                                        <option value="">Divisiones</option>
+                                        {% for d in divisiones %}
+                                            <option value="{{ d.id }}"
+                                                    {% if divisionid == d.id %}selected{% endif %}>{{ d }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md input-group input-group-sm col-md-1 mt-1">
+                                    <select id="id-select-tipo" name="tipo" class="custom-select">
+                                        <option value="">Transferencia</option>
+                                        {% for t in tipos_transferencias %}
+                                            <option value="{{ t.0 }}"
+                                                    {% if tipo == t.0 %}selected{% endif %}>{{ t.1 }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md input-group input-group-sm col-md-2 mt-1">
+                                    <select id="id-select-bodegaid" name="bodegaid" class="custom-select">
+                                        <option value="">Bodega Origen</option>
+                                        {% for b in bodegas %}
+                                            <option value="{{ b.id }}"
+                                                {% if b.id == bodegaid %}
+                                                selected
+                                                {% endif %}>
+                                                {{ b.nombre }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md-1 col mt-1">
+                                    <button id="id-btn-fecha-submit" class="btn btn-sm btn-primary btn-block small">
+                                        Consultar <i class="fa fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-body table-responsive p-0" style="min-height: 70vh">
+                        <table id="id-tabla-orden-transferencias"
+                               class="table table-striped table-bordered table-sm sm-0 no-footer m-0"
+                               role="grid">
+                            <thead class="text-center text-sm-center thead-light">
+                            <tr role="row">
+                                <th colspan="7">
+                                </th>
+                                <th class="text-right"><b>Transferencia: </b></th>
+                                <th class="text-left">
+                                    <h5 class="m-0">
+                                        <span class="badge badge-primary">{{ page_obj.paginator.count }}</span>
+                                    </h5>
+                                </th>
+                                <th>
+                                    <div class="btn-group" role="group" aria-label="Basic example">
+                                        <button rel="imprimir" data-toggle="tooltip" title="Imprimir PDF"
+                                                data-tipo="PDF" class="btn btn-info btn-sm">
+                                            <i class="fa fa-print"></i>
+                                        </button>
+                                        <a href="#" rel="imprimir" data-toggle="tooltip" title="Imprimir Excel"
+                                                data-tipo="EXCEL" class="btn btn-success btn-sm imprimir">
+                                            <i class="fa fa-file-excel"></i>
+                                        </a>
+                                    </div>
+                                </th>
+                            </tr>
+                            <tr role="row" class="small">
+                                <th>Fecha</th>
+                                <th>Documento</th>
+                                <th>Bodega Origen</th>
+                                <th>Bodega Destino</th>
+                                <th>Tipo</th>
+                                <th>Creador</th>
+                                <th>Total</th>
+                                <th>CreadoDate</th>
+                                <th align="center">
+                                    <div class="btn-group show" role="group">
+                                        <button id="btnGroupDrop1" type="button"
+                                                class="btn btn-primary dropdown-toggle btn-sm small"
+                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                            Estado
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                            <a rel="accion" class="dropdown-item filter-estado_transferencia" href="#"
+                                               data-estado_transferencia="">
+                                                TODOS
+                                            </a>
+                                            {% for e in estado_transferencias %}
+                                                <div class="divider-text m-0"></div>
+                                                <a rel="accion" class="dropdown-item filter-estado_transferencia" href="#"
+                                                   data-estado_transferencia="{{ e.0 }}">
+                                                    <i class="fa {% if estado_transferencia == e.0 %} fa-check text-success {% endif %}"></i> {{ e.1 }}
+                                                </a>
+                                            {% endfor %}
+
+                                        </div>
+                                    </div>
+                                </th>
+                                <th>Accion</th>
+                            </tr>
+                            </thead>
+                            <tbody class="table-sm small">
+                            {% for t in transferencias %}
+                                <tr>
+                                    <td align="center"><b>{{ t.fecha|date:"d/m/Y" }}</b></td>
+                                    <td align="center">{{ t.numero }}</td>
+                                    <td>{{ t.bodega_origen.nombre }}</td>
+                                    <td>{{ t.bodega_destino.nombre }}</td>
+                                    <td align="center">{{ t.tipo }}</td>
+                                    <td align="center"><span class="badge badge-secondary">{{ t.creadopor }}</span></td>
+                                    <td align="right" ><b>${{ t.total|floatformat:2|intcomma }}</b></td>
+                                    <td align="center">{{ t.creadodate }}</td>
+                                    <td align="center">
+                                        <h6>
+                                            <span rel="nestado" class="badge badge-pill {% if t.estado == '1' %}badge-warning{% elif t.estado == '2' %}badge-success{% elif t.estado == '3' %}badge-danger{% endif %}">{{ t.get_estado_display }}</span>
+                                        </h6>
+                                    </td>
+                                    <td align="center">
+                                        <div class="btn-group" role="group">
+                                            <button id="btnGroupDrop1" type="button"
+                                                    class="btn btn-primary dropdown-toggle btn-sm"
+                                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                Acciones
+                                            </button>
+                                            <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                                    {% if not t.estado in '3' %}
+                                                        <a href="{% url "inv_punto_tranferencia" t.id %}" rel="accion" class="dropdown-item sw-form-modal">
+                                                            <i class="fa fa-cubes"></i> Procesar transferencia
+                                                        </a>
+                                                        <div class="divider-text m-1"></div>
+                                                        <a href="#" rel="accion" class="dropdown-item anular-transferencia"
+                                                           data-id="{{ t.id }}"
+                                                           data-estado="{% if t.estado == '3' %}1{% else %}3{% endif %}">
+                                                            {% if t.estado == '3' %}
+                                                                <i class="fa fa-thumbs-up text-success"></i>
+                                                                Habilitar {% else %}
+                                                                <i class="fa fa-thumbs-down text-danger"></i>
+                                                                Anular{% endif %} transferencia
+                                                        </a>
+                                                    {% endif %}
+                                                <div class="divider-text m-1"></div>
+                                                <a class="dropdown-item imprimir" href="#" rel="accion"
+                                                   data-id="{{ t.id }}" data-tipo="1">
+                                                    <i class="fa fa-print text-info"></i> Imprimir
+                                                </a>
+                                                {% if permiso %}
+                                                    <a class="dropdown-item imprimir" href="#" rel="accion"
+                                                       data-id="{{ t.id }}" data-tipo="0">
+                                                        <i class="fa fa-print text-info"></i> Imprimir Sin Costo
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="11">
+                                        No se encontró registros..
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if is_paginated %}
+                        <div class="card-footer">
+                            <nav aria-label="Demo of disable class">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a href="?page={{ page_obj.previous_page_number }}{{ url }}"
+                                               class="page-link">&laquo; Atrás</a>
+                                        </li>
+
+                                        <li class="page-item">
+                                            <a href="?page=1" class="page-link">Inicio</a>
+                                        </li>
+
+                                    {% else %}
+                                        <li class="page-item disabled" style="pointer-events:none">
+                                            <a class="page-link">&laquo; Atrás</a>
+                                        </li>
+                                        <li class="page-item disabled" style="pointer-events:none">
+                                            <a href="#" class="page-link">Inicio</a>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for i in paginator.page_range %}
+                                        {% if i <= page_obj.number|add:2 and i >= page_obj.number|add:-2 %}
+                                            {% if page_obj.number == i %}
+                                                <li class="page-item active" style="pointer-events:none">
+                                                    <a href="#" class="page-link">{{ forloop.counter }}</a>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item">
+                                                    <a href="?page={{ forloop.counter }}{{ url }}"
+                                                       class="page-link">{{ forloop.counter }}</a>
+                                                </li>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a href="?page={{ page_obj.paginator.num_pages }}{{ url }}"
+                                               class="page-link">Final</a>
+                                        </li>
+
+                                        <li class="page-item">
+                                            <a href="?page={{ page_obj.next_page_number }}{{ url }}"
+                                               class="page-link">Siguiente &raquo;</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled" style="pointer-events:none">
+                                            <a href="#" class="page-link">Final</a>
+                                        </li>
+                                        <li class="page-item disabled" style="pointer-events:none">
+                                            <a class="page-link">Siguiente &raquo;</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block jscript %}
+    <script>
+        $(function () {
+
+            $('[data-toggle="tooltip"]').tooltip();
+
+            $('.date-piker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoHide: true,
+                language: 'es-ES',
+                zIndex: 2048
+            });
+
+            $('a[rel="accion"].filter-estado_transferencia').on('click', function (e) {
+                e.preventDefault();
+                let estado_transferencia = $(this).data('estado_transferencia');
+                $('#id-estado-transferencia').val(estado_transferencia);
+                $('#id-form-buscar').submit();
+            });
+
+            $('#id-tabla-orden-transferencias').on('click', 'a[rel="accion"].imprimir', function (e) {
+                let id = $(this).data('id');
+                let tipo = $(this).data('tipo');
+                let url = '/informe/transferencia_documento/'+tipo+"/"+id +'/documento';
+                window.open(url, "comprobante_transferencia", "toolbar=yes,scrollbars=yes,resizable=yes,top=50,left=200,width=800,height=600");
+            });
+
+            {#$('#id-tabla-orden-transferencias').on('click', 'a[rel="imprimir"].imprimir', function (e) {#}
+            {#    let tipo = $(this).data('tipo');#}
+            {#    let url = '/informe/informe_orden_pedido/?accion=' + tipo + '&';#}
+            {#    url += $('#id-form-buscar').serialize();#}
+            {#    window.open(url, "_blank");#}
+
+
+            $('#id-tabla-orden-transferencias').on('click', 'a[rel="accion"].anular-transferencia', function (e) {
+                let id = $(this).data('id');
+                let estado = $(this).data('estado');
+
+                let mensaje = estado == '3' ? "la anulacion del transferencia" : "habilitar estado del transferencia";
+
+                if (confirm("Confirme " + mensaje)) {
+
+                    let motivo = prompt("Ingrese el motivo.");
+                    if (motivo.length && motivo != '') {
+
+                        $.ajax({
+                            url: '/inventario/ajax/punto/transferencia/',
+                            data: {accion: 'update-transferencia-anular', transferencia_id: id, estado: estado, motivo: motivo},
+                            method: 'POST',
+                            dataType: 'json',
+                        }).done(function (data) {
+                            console.log(data);
+                            if (data.resp == true) {
+                                fnToast('El estado de la transferencia se actualizó correctamente.');
+                                window.location.reload();
+                            } else {
+                                fnToast(data.error, 3);
+                            }
+                        }).fail(function (jqXHR, textStatus) {
+                            fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                        });
+                    }
+                }
+
+            });
+
+        });
+    </script>
+{% endblock %}

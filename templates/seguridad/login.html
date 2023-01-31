@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+{% block header %}
+    <nav class="navbar navbar-landing navbar-expand-lg navbar-dark bg-gradient-success p-0">
+        <div class="container-fluid">
+            <a class="navbar-brand mr-auto" href="/"
+               style="font-family:Arial; font-weight: bolder;font-size: 16px;letter-spacing:4px">
+                <i class="{{ logo_sistema }}"></i>
+                {{ nombre_sistema }} </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar1">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbar1">
+                <ul class="navbar-nav ml-auto">
+
+                    <li class="nav-item">
+                        <a class="nav-link page-scroll text-white" href=""
+                           title="" style="font-family:Arial; font-weight: bolder;font-size: 16px;letter-spacing:4px">
+                            Supermercados
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link page-scroll text-white" href="http://sitio.istvr.edu.ec/"
+                           title="" style="font-family:Arial; font-weight: bolder;font-size: 16px;letter-spacing:4px">
+                            BELBRY
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div> <!-- container //  -->
+    </nav>
+{% endblock %}
+
+{% block main %}
+    <div class="container-fluid" style="margin-top: 3rem">
+        <div class="row">
+            <article class="col-lg-8 col-md">
+                <div class="card shadow">
+                    <div class="card-body center">
+                        <!--img src="/static/img/logo/logo-400px.png"-->
+                        <div class="embed-responsive">
+                            <!--iframe width="560" height="315" src="https://www.youtube.com/embed/afEQ940nAbU?controls=0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe-->
+                            <a target="_blank" href="https://www.facebook.com/BelBrysupermercados">
+                                <img src="/static/img/fondo/navidad-cover.png" class="img-fluid">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            <aside class="col-lg-4 col-md">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <form id="id-form-login" class="form-signin p-4">
+                            {% csrf_token %}
+                            <div class="text-center">
+                                <img src="/static/img/logo/logo-belbry-01.png">
+                            </div>
+                            <div class="divider-text"></div>
+
+                            <div class="p-1" style="min-height: 1.5rem">
+                                <div id="id-alert" class="alert alert-danger p-1 text-center d-none" role="alert">
+                                    This is a danger alert—check it out!
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-xs-6">
+                                    <label for="id-usuario"><b>Usuario :</b></label>
+                                    <input type="text" id="id-usuario" name="usuario" class="form-control"
+                                           placeholder="Ingrese su cuenta institucional" required
+                                           autofocus="">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-xs-6">
+                                    <label for="id-password"><b>Contraseña :</b></label>
+                                    <input type="password" id="id-password" name="password" class="form-control"
+                                           placeholder="Ingrese su contraseña"
+                                           required>
+                                </div>
+                            </div>
+                            <div class="checkbox mb-2">
+                                <label>
+                                    <input type="checkbox" name="norobot" required> No soy un Robot
+                                </label>
+                            </div>
+
+                            <button id="id-btnlogin" class="btn btn-lg btn-success bg-gradient-success btn-block p-1">
+                                <i class="fa fa-sign-in-alt"></i> Iniciar Sesión
+                            </button>
+                            <br>
+                            <p class="text-muted">
+                                <a href="#" id="id-btn-show-form-consulta"> Consulta tu cuenta institucional aquí.</a>
+                                <br>
+                                <a href="#" id="id-btn-show-form-email"> ¿Olvidaste tu contraseña?</a>
+                            </p>
+                        </form>
+                        <form id="id-form-consulta" class="form-signin p-4" style="display: none">
+                            <div class="text-center">
+                                <!--i class="{{ logo_in }} text-primary"></i-->
+                                <img src="/static/img/logo/logo-150px.png">
+                            </div>
+                            <div class="divider-text"></div>
+
+                            <div style="min-height: 2rem">
+                                <div id="id-error-consulta" class="alert alert-danger p-1 text-center d-none"
+                                     role="alert">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-xs-6">
+                                    <label for="id-cedula"><b>Cédula :</b></label>
+                                    <input type="text" id="id-cedula-consulta" name="cedula" class="form-control"
+                                           placeholder="Ingrese número de cédula" required
+                                           autofocus="">
+                                </div>
+                            </div>
+
+                            <div class="checkbox mb-3 mt-1">
+                                <label>
+                                    <input type="checkbox" name="norobot" required> No soy un Robot
+                                </label>
+                            </div>
+                            <button id="id-btnlogin-consulta" class="btn btn-success">
+                                <i class="fa fa-search"></i> Consultar cuenta institucional
+                            </button>
+                            <button id="id-btn-cancelar-consulta" type="button" class="btn btn-secondary btn-cancel">
+                                <i class="fa fa-reply"></i> Cancelar
+                            </button>
+                        </form>
+                        <form id="id-form-email" class="form-signin p-4" style="display: none">
+                           <div class="text-center">
+                                <!--i class="{{ logo_in }} text-primary"></i-->
+                                <img src="/static/img/logo/logo-150px.png">
+                            </div>
+                            <div class="divider-text"></div>
+                            <div style="min-height: 2rem">
+                                <div id="id-error-email" class="alert alert-danger p-1 text-center d-none" role="alert">
+
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-xs-6">
+                                    <label for="id-cedula"><b>Cédula :</b></label>
+                                    <input type="text" id="id-cedula-email" name="cedula" class="form-control"
+                                           placeholder="Ingrese número de cédula" required
+                                           autofocus="">
+                                </div>
+                            </div>
+                            <div class="checkbox mb-3 mt-1">
+                                <label>
+                                    <input type="checkbox" name="norobot" required> No soy un Robot
+                                </label>
+                            </div>
+                            <button id="id-btnlogin-email" class="btn btn-success">
+                                <i class="fa fa-mail-bulk"></i> Solicitar cambio de contraseña
+                            </button>
+                            <button id="id-btn-cancelar-email" type="button" class="btn btn-secondary btn-cancel">
+                                <i class="fa fa-reply"></i> Cancelar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+{% endblock %}
+
+{% block footer %}
+    <footer id="id-footer" class="navbar navbar-expand-lg navbar-dark fixed-bottom bg-dark-50">
+        <div class="container-fluid">
+            <div class="col-md" style="font-size: 12px">
+                <span class="text-white fa-pull-left">Copyright © 2020</span>
+                <span class="fa-pull-right">
+               <a class="text-white" href="#"
+                  style="font-family:Arial; letter-spacing:4px">
+                       www.belbry.com.ec
+                    </a>
+           </span>
+            </div>
+        </div>
+    </footer>
+{% endblock %}
+{% block jscript %}
+    <script>
+        $(function () {
+
+            $('input[type=text]').on('blur', function (e) {
+                e.preventDefault();
+                $('#id-alert').addClass('d-none');
+            });
+            $('#id-form-login').on({
+                submit: function (e) {
+                    e.preventDefault();
+                    var frmData = new FormData($(this)[0]);
+                    //frmData.append('navegador', jscd.browser + ' ' + jscd.browserMajorVersion);
+                    //frmData.append('so', jscd.os + ' ' + jscd.osVersion);
+                    //frmData.append('screensize', jscd.screen);
+
+                    $('#id-btnlogin').attr('disabled', true);
+                    $('#id-alert').addClass('d-none');
+
+                    $.ajax({
+                        url: '/seguridad/session/',
+                        data: frmData,
+                        method: 'POST',
+                        dataType: 'json',
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    }).done(function (data) {
+                        if (data.resp == true) {
+                            window.location = '/';
+                            return false;
+                        } else {
+                            $('#id-alert').removeClass('d-none');
+                            $('#id-alert').html('<i class="fa fa-ban"></i> <em>' + data.error + '</em>');
+                        }
+                        $('#id-btnlogin').attr('disabled', false);
+                    }).fail(function () {
+                        $('#id-alert').removeClass('d-none');
+                        $('#id-alert').html('Problemas de conexion con el servidor..')
+                        $('#id-btnlogin').attr('disabled', false);
+                    });
+                }
+            });
+
+            $('#id-form-consulta').on({
+                submit: function (e) {
+                    e.preventDefault();
+                    var frmData = new FormData($(this)[0]);
+                    frmData.append('accion', "cuenta-institucional");
+
+                    $('#id-btnlogin-consulta').attr('disabled', true);
+                    $('#id-error-consulta').addClass('d-none');
+
+                    $.ajax({
+                        url: '/seguridad/consulta/cuenta-institucional',
+                        data: frmData,
+                        method: 'POST',
+                        dataType: 'json',
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    }).done(function (data) {
+                        console.log(data);
+                        if (data.resp == true) {
+                            $('#id-usuario').val(data.email);
+                            $('.btn-cancel').click();
+                        } else {
+                            $('#id-error-consulta').removeClass('d-none');
+                            $('#id-error-consulta').html('<i class="fa fa-ban"></i> <em>' + data.error + '</em>');
+                        }
+                        $('#id-btnlogin-consulta').attr('disabled', false);
+                    }).fail(function () {
+                        $('#id-error-consulta').removeClass('d-none');
+                        $('#id-error-consulta').html('Problemas de conexion con el servidor..')
+                        $('#id-btnlogin-consulta').attr('disabled', false);
+                    });
+                }
+            });
+
+            $('#id-form-email').on({
+                submit: function (e) {
+                    e.preventDefault();
+                    $('#id-error-email').removeClass('alert-success');
+                    $('#id-error-email').addClass('alert-danger');
+
+                    var frmData = new FormData($(this)[0]);
+
+                    $('#id-btnlogin-email').attr('disabled', true);
+                    $('#id-error-email').addClass('d-none');
+
+                    $.ajax({
+                        url: '/seguridad/solicitud-cambio-clave-email/',
+                        data: frmData,
+                        method: 'POST',
+                        dataType: 'json',
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    }).done(function (data) {
+                        if (data.resp == true) {
+                            $('#id-error-email').removeClass('d-none').removeClass('alert-danger');
+                            $('#id-error-email').addClass('alert-success');
+                            $('#id-error-email').html('<b>Revise su correo institucional: </b>' + data.email);
+                        } else {
+                            $('#id-error-email').removeClass('d-none');
+                            $('#id-error-email').html('<i class="fa fa-ban"></i> <em>' + data.error + '</em>');
+                        }
+                        $('#id-error-email').attr('disabled', false);
+                        $('#id-btnlogin-email').attr('disabled', false);
+                    }).fail(function () {
+                        $('#id-error-email').removeClass('d-none');
+                        $('#id-error-email').html('Problemas de conexion con el servidor..')
+                        $('#id-btnlogin-email').attr('disabled', false);
+                    });
+                }
+            });
+
+            $('#id-btn-show-form-email').click(function (e) {
+                $('#id-error-email').addClass('d-none');
+                $('#id-cedula-email').val('');
+                $('#id-form-login').hide();
+                $('#id-form-email').show();
+            });
+
+            $('#id-btn-show-form-consulta').click(function (e) {
+                $('#id-error-consulta').addClass('d-none');
+                $('#id-cedula-consulta').val('');
+                $('#id-form-login').hide();
+                $('#id-form-consulta').show();
+            });
+
+            $('.btn-cancel').click(function (e) {
+                e.preventDefault();
+                $('#id-form-login').show();
+                $('#id-form-email').hide();
+                $('#id-form-consulta').hide();
+            });
+        });
+    </script>
+{% endblock %}

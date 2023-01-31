@@ -1,0 +1,791 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block headcss %}
+    <link rel="stylesheet" href="/static/css/select2.min.css">
+    <link rel="stylesheet" href="/static/css/select2-bootstrap4.min.css">
+    <style>
+        input[type=checkbox] {
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+
+{% block main %}
+    <div class="container-fluid" style="margin-top: 2.6rem">
+        <div class="row">
+            <div class="col-lg-12">
+                <nav id="siteBreadcrumb" aria-label="breadcrumb">
+                    <ol class="breadcrumb p-2">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/venta/comision/liquidacion/">Liquidacion ventas</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        <div class="row">
+            <article class="col">
+                <div class="card mb-5">
+                    <div class="card-header">
+                        <form id="id-form-vendedor-buscar">
+                            <div class="form-row">
+                                <input type="hidden" name="accion" value="consultar_comisiones">
+                                <input type="hidden" id="id-vendedor-id" name="vendedorid">
+                                <div class="col-md-2 mb-1">
+                                    <div class="input-group input-group-sm">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fa fa-credit-card"></i>
+                                            </span>
+                                        </div>
+                                        <input type="text" id="id-vendedor-ruc" name="vendedor_ruc"
+                                               class="form-control" maxlength="13" placeholder="Cedula o Ruc.">
+                                        <div class="input-group-prepend">
+                                            <button id="id-btn-send-cedula-empleado" class="input-group-text">
+                                                <i class="fa fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-1">
+                                    <div class="input-group">
+                                        <select id="id-select-vendedor" class="select2-design"
+                                                style="width: 100%;padding: 5px">
+                                            <option value="">Buscar vendedor.</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 mb-1">
+                                    <div class="input-group input-group-sm">
+                                        <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-calendar"></i>
+                                        </span>
+                                        </div>
+                                        <input type="text" id="id-fecha-corte" name="fecha_corte"
+                                               value="{{ hoy|date:"Y-m-d" }}"
+                                               class="form-control bg-white date-piker" data-toggle="datepicker"
+                                               required readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-1 mb-1">
+                                    <div class="">
+                                        <button class="btn btn-sm btn-primary btn-block small">
+                                            Consultar <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-1 mb-1">
+                                    <div class="">
+                                        <button type="button" id="id-btn-buscar-pendiente"
+                                                class="btn btn-sm btn-info btn-block small">
+                                            Pendientes <i class="fa fa-filter"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-body table-responsive p-1">
+                        <table id="id-table-resumen-comision"
+                               class="table table-striped table-bordered table-sm sm-0 m-0" style="width: 50%">
+                            <thead class="text-center text-sm-center thead-light small">
+                            <tr>
+                                <th colspan="4">Ventas</th>
+                                <th></th>
+                                <th colspan="4">Liquidacion</th>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <th>C.Pendientes</th>
+                                <th>V.Nuevas</th>
+                                <th>Total</th>
+
+                                <th class="table-light"></th>
+
+                                <th>C.Parcial</th>
+                                <th>C.Total</th>
+                                <th>C.Pendiente</th>
+                                <th>Supervision</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-body table-responsive p-0" style="max-height: 66vh; overflow: auto">
+                        <table id="id-tabla-detalle-comisiones"
+                               class="table table-striped table-bordered table-sm sm-0 dataTable no-footer m-0"
+                               role="grid">
+                            <thead class="text-center text-sm-center thead-light small">
+                            <tr role="row">
+                                <th colspan="18" class="text-left">
+                                    Vendedor : <span id="id-vendedor-nombre"></span>
+                                </th>
+                            </tr>
+                            <tr role="row">
+                                <th>#</th>
+                                <th>Cartilla</th>
+                                <th>Cliente</th>
+                                <th class="d-none d-sm-table-cell">Supervisor</th>
+                                <th>Fecha</th>
+                                <th>P.Comision</th>
+                                <th>Dias</th>
+                                <th class="d-none d-sm-table-cell">Tipo</th>
+                                <th>V.Credito</th>
+                                <th>V.Abono</th>
+                                <th>Abonos</th>
+                                <th>Saldo</th>
+                                <th>C.Venta</th>
+                                <th>C.Sugerido</th>
+                                <th class="d-none d-sm-table-cell">%</th>
+                                <th>Estado</th>
+                                <th>
+                                    <input type="checkbox" id="id-checkbox-all" checked>
+                                </th>
+                                <th>Acción</th>
+                            </tr>
+                            </thead>
+                            <tbody class="small">
+                            </tbody>
+                            <tfoot class="table-primary small">
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="card-footer">
+                        <div class="fa-pull-right">
+                            <button type="button" onclick="window.location='/'" class="btn btn-danger">
+                                <i class="fa fa-arrow-left"></i>
+                                Cancelar
+                            </button>
+                            <button id="id-btn-guardar-comisiones" class="btn btn-success">
+                                <i class="fa fa-save"></i>
+                                Guardar comisiones
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <div class="modal fade" id="id-modal-confirmar" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="id-form-modal-confirmar">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitle">Guardar como.</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-row">
+                            <div class="col-md mb-2 text-center">
+                                <div class="btn-group" data-toggle="buttons">
+                                    <label class="btn btn-success btn-sm" style="cursor: pointer">
+                                        <input type="radio" name="options" autocomplete="off" value="1" required
+                                               checked>
+                                        <span>PENDIENTE</span>
+                                    </label>
+                                    <label class="btn btn-primary btn-sm" style="cursor: pointer">
+                                        <input type="radio" name="options" autocomplete="off" value="2">
+                                        <span>PROCESADO</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                            <i class="fa fa-window-close"></i> Cerrar
+                        </button>
+                        <button id="id-btn-modal-guardar" class="btn btn-primary btn-sm">
+                            <i class="fa fa-save"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="id-modal-buscar-temporal" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="id-form-modal-confirmar">
+                    <div class="modal-header">
+                        <div class="col-md">
+                            <div class="input-group input-group-sm">
+                                <div class="input-group-prepend">
+                                            <span class="input-group-text">
+                                                <i class="fa fa-credit-card"></i>
+                                            </span>
+                                </div>
+                                <input type="text" id="id-criterio" name=""
+                                       class="form-control" maxlength="13" placeholder="Buscar pendientes">
+                                <div class="input-group-prepend">
+                                    <button id="id-btn-send-cedula-empleado" class="input-group-text">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body table-responsive p-0" style="max-height: 28vh; overflow: auto">
+                        <table id="id-table-comision-pendientes"
+                               class="table table-striped table-bordered table-sm sm-0 m-0"
+                               role="grid">
+                            <thead class="text-center text-sm-center thead-light small">
+                            <tr role="row">
+                                <th>Cod.</th>
+                                <th>Fecha</th>
+                                <th>Vendedor</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                            </tr>
+                            </thead>
+                            <tbody class="small">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                            <i class="fa fa-window-close"></i> Cerrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}
+
+{% block footer %}
+    <footer class="navbar navbar-expand-md navbar-dark fixed-bottom bg-dark small">
+        <div class="container-fluid" style="color: #01ff70">
+            <div class="col-md-2 col-4 h5">
+                Ventas: <b id="id-ventas-cantidad">0</b>
+            </div>
+            {#            <div class="col-md-1 col-1 h5">#}
+            {#                V.Nuevas: <b id="id-ventas-nuevas">0</b>#}
+            {#            </div>#}
+            {#            <div class="col-md-2 col-2 h5">#}
+            {#                C.Total: <b id="id-comision-total">0</b>#}
+            {#            </div>#}
+            {#            <div class="col-md-1 col-1 h5">#}
+            {#                C.Parcial: <b id="id-comision-parcial">0</b>#}
+            {#            </div>#}
+            {#            <div class="col-md-1 col-1 h5">#}
+            {#                C.Pendiente: <b id="id-comision-pendiente">0</b>#}
+            {#            </div>#}
+            {#            <div class="col-md-1 col-1 h5">#}
+            {#                Supervision: <b id="id-comision-supervision">0</b>#}
+            {#            </div>#}
+            <div class="col-md-4 col-8 text-right h5">
+                T.Comision a Pagar: $<b id="id-total-comision-pagar">0.00</b>
+            </div>
+        </div>
+    </footer>
+
+    <script id="js-template-det-comisiones" type="text/x-jsrender">
+    [%* window.x = 1%]
+[%for items%]
+   <tr>
+        <td class="d-none d-sm-table-cell" align="center">[%*: x++%]</td>
+        <td>
+           <b>[%:numcartilla%]</b>
+        </td>
+        <td>
+          <b>[%:cliente%]</b>
+        </td>
+        <td class="d-none d-sm-table-cell">[%:supervisor%]</td>
+        <td align="center">
+           <span class="badge badge-pill badge-secondary">[%:fecha%]</span>
+        </td>
+        <td align="right">[%:pagos_comision%]</td>
+        <td align="center">
+          <span class="badge badge-pill badge-info" style="font-size:10px">[%:dias%]</span>
+        </td>
+        <td class="d-none d-sm-table-cell" align="center">
+           <span class="badge badge-pill badge-[%if contado%]success[%else%]secondary[%/if%]">[%:contado_nombre%]</span>
+        </td>
+        <td align="right"><b>$[%:debe%]</b></td>
+        <td align="right"><b>$[%:haber%]</b></td>
+        <td align="center">
+          <span class="badge badge-pill badge-secondary" style="font-size:10px">[%:abonos%]</span>
+        </td>
+        <td align="right"><b>$[%:saldo%]</b></td>
+        <td align="right"><b>$[%:valor_comision_venta%]</b></td>
+        <td align="right" class="table-info">
+           [%if valor_comision > 0%]
+             <b style="font-size:13px">$[%:valor_comision%]</b>
+           [%else%]-[%/if%]
+        </td>
+        <td class="d-none d-sm-table-cell" align="center">
+            [%if porcentaje > 0%]
+              <span class="badge badge-pill badge-[%:porc_color%]">[%:porcentaje%]%</span>
+            [%else%]-[%/if%]
+        </td>
+        <td align="center">
+          <span class="badge badge-[%if estado=='1'%]success[%else estado=='2'%]info[%else estado=='3'%]warning[%else estado=='4'%]danger[%/if%]">[%:estado_nombre%]</span>
+        </td>
+        <td align="center">
+            [%if valor_comision > 0%]
+              <input type="checkbox" rel="accion" data-movimientoid="[%:movimientoid%]" class="check" [%if procesar%]checked[%/if%]>
+            [%/if%]
+        </td>
+        <td align="center">
+          <div class="btn-group btn-group-sm" role="group">
+            <button id="btnGroupDrop1" type="button"
+                    class="btn btn-primary dropdown-toggle btn-sm small btn-block pt-0 pb-0"
+                    data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">
+                Acciones
+            </button>
+            <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                <a href="#" rel="accion" class="dropdown-item sw-form-modal"
+                   data-id="{{ m.id }}">
+                    <i class="fa fa-list-ol text-primary"></i> Detalle de venta
+                </a>
+            </div>
+          </div>
+        </td>
+    </tr>
+  [%/for%]
+
+
+
+
+
+    </script>
+    <script id="js-template-total-comisiones" type="text/x-jsrender">
+    <tr class="text-center">
+        <th colspan="5">
+        </th>
+        <th>Pagado</th>
+        <th></th>
+        <th></th>
+        <th>V.Credito</th>
+        <th>V.Abono</th>
+        <th>Abonos</th>
+        <th>Saldo</th>
+        <th>C.Venta</th>
+        <th class="table-info">Comisión</th>
+        <th colspan="4"></th>
+    </tr>
+    <tr class="text-right">
+        <th colspan="5">
+           Totales
+        </th>
+        <th align="right">
+           $[%:total_pagos_comision%]
+        </th>
+        <th> </th>
+        <th> </th>
+        <th align="right">
+           $[%:total_debe%]
+        </th>
+        <th align="right">
+           $[%:total_haber%]
+        </th>
+        <th class="text-center">
+           [%:total_abonos%]
+        </th>
+        <th align="right">
+           $[%:total_saldo%]
+        </th>
+        <th align="right">
+           $[%:total_comision_ventas%]
+        </th>
+        <th align="right" class="table-info">
+           <span style="font-size:14px">$[%:total_comision.toFixed(2)%]</span>
+        </th>
+        <th colspan="4"></th>
+    </tr>
+
+
+
+
+
+
+    </script>
+    <script id="js-template-resumen-comision" type="text/x-jsrender">
+    <tr class="text-right">
+        <td align="center"> </td>
+        <td align="center"><b>[%:pendientes%]</b></td>
+        <td align="center"><b>[%:ventas_nuevas%]</b></td>
+        <td align="center"><b>[%:items%]</b></td>
+
+        <td class="bg-table-light" align="center"> </td>
+
+        <td align="center"><b>[%:parciales%]</b></td>
+        <td align="center"><b>[%:ctotales%]</b></td>
+        <td align="center"><b>[%:pendientes_nuevas%]</b></th>
+        <td align="center"><b>[%:supervision%]</b></td>
+    </tr>
+
+    </script>
+    <script id="js-template-pendientes" type="text/x-jsrender">
+    [%for pendientes%]
+   <tr>
+        <td align="center">
+            <button type="button" rel="btn-accion" class="btn btn-success btn-sm small pt-0 pb-0" value="[%:id%]">
+                <i class="fa fa-check"></i>
+            </button>
+        </td>
+        <td>
+          [%:fecha%]
+        </td>
+        <td>
+          [%:nombre%]
+        </td>
+        <td align="right">
+          [%:total%]
+        </td>
+        <td>
+        </td>
+    </tr>
+  [%/for%]
+
+
+    </script>
+
+{% endblock %}
+
+{% block js %}
+
+    <script src="/static/js/select2.min.js"></script>
+    <script src="/static/lib/jsrender.min.js"></script>
+{% endblock %}
+
+{% block jscript %}
+    <script>
+        $(function () {
+            $.views.settings.delimiters("[%", "%]");
+            $('.date-piker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoHide: true,
+                language: 'es-ES',
+                zIndex: 2048
+            });
+            $('select.select2-design').each(function () {
+                $(this).select2({
+                    theme: 'bootstrap4',
+                    width: 'style',
+                    placeholder: $(this).attr('placeholder'),
+                    allowClear: Boolean($(this).data('allow-clear')),
+                });
+            });
+
+            $('#id-select-vendedor').select2({
+                ajax: {
+                    url: '/empleado/empleados/comision',
+                    beforeSend: function (xhr, settings) {
+                        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                        }
+                    },
+                    data: function (params) {
+                        var query = {search: params.term, tipo: 'vendedor'};
+                        return query;
+                    },
+                    processResults: function (data) {
+                        return {results: data.items};
+                    }
+                }
+            });
+
+            $('#id-select-vendedor').on('change', function (e) {
+                let vendedorid = $(this).val();
+                $('#id-vendedor-id').val(vendedorid);
+                $('#id-form-vendedor-buscar').submit();
+            });
+
+            $('#id-form-vendedor-buscar').on({
+                submit: function (e) {
+                    e.preventDefault();
+                    modelo.comision.vendedor = new Object;
+                    modelo.comision.items = [];
+                    modelo.totales = null;
+
+                    $("#id-tabla-detalle-comisiones > tbody").html('');
+                    $("#id-tabla-detalle-comisiones > tfoot").html('');
+                    $('#id-vendedor-nombre').html('');
+
+                    var frmData = new FormData($(this)[0]);
+
+                    $.ajax({
+                        url: '/venta/comision/liquidacion/',
+                        data: frmData,
+                        method: 'POST',
+                        dataType: 'json',
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    }).done(function (data) {
+                        if (data.resp == true) {
+                            modelo.comision.vendedor = data.vendedor;
+                            modelo.comision.vendedorid = data.vendedor.id;
+                            modelo.comision.items = data.detalle_comisiones;
+                            modelo.totales = data.totales;
+                            console.log(modelo);
+
+                            if (modelo.comision.items.length > 0) {
+                                modelo.render_detalle();
+                                modelo.render_totales();
+                                modelo.render_resumen();
+
+                                $('#id-vendedor-nombre').html(data.vendedor.nombre);
+                            } else {
+                                fnToast('No se contro de registro de ventas.', 3);
+                            }
+                        } else {
+                            fnToast(data.error, 3);
+                        }
+                    }).fail(function (jqXHR, textStatus) {
+                        fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                    });
+                }
+            });
+
+            $("#id-tabla-detalle-comisiones > tbody").on('change', 'input[rel="accion"].check', function (e) {
+                e.preventDefault();
+                if (modelo.checked_item({id: $(this).data('movimientoid'), procesar: $(this).prop('checked')})) {
+                    modelo.actualizar_totales();
+                }
+            });
+
+            $("#id-checkbox-all").change(function (e) {
+                e.preventDefault();
+                modelo.checked_items(this.checked);
+                $('input[rel="accion"]:checkbox').prop('checked', this.checked);
+                modelo.actualizar_totales();
+            });
+
+            $("#id-btn-guardar-comisiones").on('click', function (e) {
+                e.preventDefault();
+                if (modelo.comision.items.length <= 0) return;
+                $('#id-modal-confirmar').modal('show');
+            });
+
+            $("#id-btn-buscar-pendiente").on('click', function (e) {
+                e.preventDefault();
+                $("#id-modal-buscar-temporal").modal('show');
+            });
+
+            $("#id-form-modal-confirmar").on({
+                submit: function (e) {
+                    e.preventDefault();
+                    let opcion = $('input[name=options]:checked').val();
+                    let accion = 'guardar_comisiones_temporal';
+
+                    if (opcion == '2') {
+                        if ($('#id-tabla-detalle-comisiones > tbody input[type=checkbox]:checked').length <= 0) {
+                            fnToast('Debe seleccionar almenos un item', 3);
+                            return;
+                        }
+                        accion = 'guardar_comisiones';
+                    }
+                    if (modelo.comision.items.length <= 0) return;
+
+                    modelo.comision.fecha = $('#id-fecha-corte').val();
+                    modelo.comision.subtotal = modelo.totales.total_comision;
+                    modelo.comision.total = modelo.totales.total_comision;
+                    $('#id-modal-confirmar').modal('hide');
+                    console.log(modelo.comision);
+
+                    $.ajax({
+                        url: '/venta/comision/liquidacion/',
+                        data: {accion: accion, comision: JSON.stringify(modelo.comision),totales: JSON.stringify(modelo.totales)},
+                        method: 'POST',
+                        dataType: 'json',
+                    }).done(function (data) {
+                        console.log(data);
+                        if (data.resp) {
+                            if (opcion == '2') {
+                                let url = '/informe/vendedor/comision/pdf/' + data.documentoid + '/';
+                                window.open(url, "_blank");
+                            }
+                            fnToast('Guardado correctamente.');
+                            $("#id-tabla-detalle-comisiones > tbody").html('');
+                            $("#id-tabla-detalle-comisiones > tfoot").html('');
+                            $('#id-vendedor-nombre').html('');
+                            modelo.comision.items = []
+                        }
+                        $('#id-btn-guardar-comisiones').attr('disabled', false);
+                    }).fail(function (jqXHR, textStatus) {
+                        $('#id-btn-guardar-comisiones').attr('disabled', false);
+                        fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                    });
+                }
+            });
+
+            $("#id-criterio").on('keyup', function (e) {
+                e.preventDefault();
+                $.ajax({
+                    url: '/venta/comision/liquidacion/buscar-pendientes/',
+                    data: {accion: 'buscar_pendientes', criterio: $(this).val()},
+                    method: 'GET',
+                    dataType: 'json',
+                    beforeSend: function (xhr, settings) {
+                    }
+                }).done(function (data) {
+                    console.log(data);
+                    if (data.resp) {
+                        let tmpl = $.templates("#js-template-pendientes");
+                        let html = tmpl.render(data);
+                        $("#id-table-comision-pendientes > tbody").html(html);
+                    }
+                }).fail(function (jqXHR, textStatus) {
+                    fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                });
+            });
+
+            $('#id-table-comision-pendientes >tbody').on('click', 'button[rel=btn-accion]', function (e) {
+                e.preventDefault();
+                $("#id-modal-buscar-temporal").modal('hide');
+                let id = $(this).val();
+
+                $("#id-tabla-detalle-comisiones > tbody").html('');
+                $("#id-tabla-detalle-comisiones > tfoot").html('');
+                $('#id-vendedor-nombre').html('');
+
+                $.ajax({
+                    url: '/venta/comision/liquidacion/',
+                    data: {accion: 'consultar_comisiones_pendientes', pendienteid: id},
+                    method: 'POST',
+                    dataType: 'json',
+                }).done(function (data) {
+                    console.log(data);
+                    if (data.resp) {
+                        modelo.comision = data.pendiente;
+                        modelo.totales = data.totales;
+
+                        if (modelo.comision.items.length > 0) {
+                            modelo.render_detalle();
+                            modelo.render_totales();
+                            $('#id-vendedor-nombre').html(modelo.comision.vendedor.nombre);
+                        } else {
+                            fnToast('No se contro de registro de ventas.', 3);
+                        }
+                    }
+                }).fail(function (jqXHR, textStatus) {
+                    fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                });
+
+            });
+
+            $('#id-btn-imprimir').click(function (e) {
+                e.preventDefault();
+                if (modelo.comision.items.length <= 0) return;
+
+                $.ajax({
+                    url: '/venta/comision/liquidacion/',
+                    data: {accion: accion, comision: JSON.stringify(modelo.comision),totales: JSON.stringify(modelo.totales)},
+                    method: 'POST',
+                    dataType: 'json',
+                }).done(function (data) {
+                    $('#id-btn-guardar-comisiones').attr('disabled', false);
+                }).fail(function (jqXHR, textStatus) {
+                    $('#id-btn-guardar-comisiones').attr('disabled', false);
+                    fnToast('Problemas de conexion con el servidor: ' + textStatus, 3);
+                });
+
+            })
+        });
+
+        var modelo = {
+            comision: {
+                pendienteid: 0,
+                fecha: '',
+                tipo: 'COM-IN',
+                vendedor: new Object,
+                vendedorid: '',
+                subtotal: 0,
+                descuento: 0,
+                impuesto: 0,
+                total: 0,
+                items: [],
+            },
+            totales: null,
+            render_detalle: function () {
+                $.views.settings.allowCode(true);
+                let tmpl = $.templates("#js-template-det-comisiones");
+                let html = tmpl.render(this.comision);
+                $("#id-tabla-detalle-comisiones > tbody").html(html);
+            },
+            render_totales: function () {
+                let tmpl = $.templates("#js-template-total-comisiones");
+                this.totales.total_comision = Number(this.totales.total_comision);
+                let html = tmpl.render(this.totales);
+
+                $("#id-tabla-detalle-comisiones > tfoot").html(html);
+                $("#id-total-comision-pagar").html(this.totales.total_comision.toFixed(2));
+
+                $("#id-ventas-cantidad").html(this.totales.items);
+
+                {#$("#id-comision-total").html(this.totales.ctotales);#}
+                {#$("#id-comision-parcial").html(this.totales.parciales);#}
+                {#$("#id-comision-pendiente").html(this.totales.pendientes);#}
+                {#$("#id-comision-supervision").html(this.totales.supervision);#}
+                {#$("#id-ventas-nuevas").html(this.totales.ventas_nuevas);#}
+            },
+            render_resumen: function () {
+                let tmpl = $.templates("#js-template-resumen-comision");
+                let html = tmpl.render(this.totales);
+                $("#id-table-resumen-comision > tbody").html(html);
+            },
+            checked_item: function (e) {
+                for (let item of this.comision.items) {
+                    if (e.id == item.movimientoid) {
+                        item.procesar = e.procesar;
+                        return true;
+                    }
+                }
+                return false;
+            },
+            checked_items: function (checked) {
+                for (let item of this.comision.items) {
+                    if (Number(item.valor_comision) > 0) {
+                        item.procesar = checked
+                    }
+                }
+            },
+            actualizar_totales: function () {
+                this.totales.total_comision = 0;
+                this.totales.items = 0;
+
+                for (let item of this.comision.items) {
+                    if (item.procesar) {
+                        this.totales.total_comision += Number(item.valor_comision);
+                        this.totales.items += 1;
+                    }
+                }
+                this.totales.total_comision = Math.round(this.totales.total_comision * 100 + Number.EPSILON) / 100;
+                this.render_totales();
+            },
+            procesar_envio: function () {
+                for (let i = 0; i < this.comision.items.length; i++) {
+                    if (!this.comision.items[i].procesar) {
+                        this.comision.items.splice(i, 1);
+                        i--;
+                    }
+                }
+            }
+        }
+    </script>
+{% endblock %}
+

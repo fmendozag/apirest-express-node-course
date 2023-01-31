@@ -1,0 +1,39 @@
+ .blink {
+            animation: blinker 1s step-start infinite;
+        }
+        @keyframes blinker {
+            50% {
+                opacity: 0;
+            }
+        }
+        @media (min-width: 992px) {
+            .gedf-card {
+                margin-bottom: 2.77rem;
+            }
+        }
+        .easy-autocomplete input {
+            border-radius: 0;
+        }
+        #id-table-buscar-filtro tbody {
+            display: block;
+            height: 280px;
+            overflow: auto;
+        }
+        #id-table-buscar-filtro thead, #id-table-buscar-filtro tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+        #id-table-buscar-filtro tbody tr {
+            cursor: pointer;
+        }
+        table.table-hover tbody tr:hover {
+            z-index: 1000;
+            background: #87c3ff;
+            color: #1b1e21;
+        }
+        #id-table-detalle-factura tbody td{
+            vertical-align: top;
+            border-top: 1px solid #CCC;
+        }
+
